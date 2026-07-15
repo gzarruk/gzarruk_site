@@ -1,118 +1,60 @@
-# gzarruk site
+# gzarruk_site
 
-Convirtiendo datos y algoritmos en soluciones e innovación.
+Personal brand site for Gustavo A. Zarruk — a single-file, bold & modern link-hub.
 
-## Installation
+## Files
+- `index.html` — the whole site (self-contained, no build step).
+- `assets/profile.jpg` — your photo (add this yourself, see below).
 
-You can setup a virtual environment and install dependencies in a single command with:
+## 1. Add your photo
+Put your chosen photo in an `assets/` folder named exactly `profile.jpg`:
+
+```
+gzarruk_site/
+  index.html
+  assets/
+    profile.jpg
+```
+
+Tip: a square crop (~800×800px) looks best. If the file is missing, the page
+automatically shows a "GZ" monogram instead of breaking.
+
+## 2. Push to GitHub
 
 ```bash
-uv sync
+git clone git@github.com:gzarruk/gzarruk_site.git
+# copy index.html, README.md and your assets/ folder into the repo, then:
+git add .
+git commit -m "Add personal brand site"
+git push origin main
 ```
 
-This will create your virtual environment in the `.venv` directory of your project root.
+## 3. Turn on GitHub Pages
+Repo → **Settings** → **Pages** → under **Build and deployment**, set
+**Source = Deploy from a branch**, **Branch = main**, **Folder = / (root)** → **Save**.
+Your site goes live at `https://gzarruk.github.io/gzarruk_site/` within a minute or two.
 
-## Set up database
+## 4. Connect your custom domain (registered at Squarespace)
+Google Sites is not involved — you host on GitHub Pages and point your Squarespace
+domain at it.
 
-Create a database named `gzarruk_site`.
+**a. In GitHub:** Settings → Pages → **Custom domain** → enter `www.YOURDOMAIN.com`
+→ Save. (GitHub commits a `CNAME` file to the repo for you.)
 
-```
-createdb gzarruk_site
-```
+**b. In Squarespace:** Domains dashboard → your domain → **DNS** → **DNS Settings**
+→ **Custom Records** → **Add record**:
 
-Create database migrations:
+| Type  | Host / Name | Data / Value             |
+|-------|-------------|--------------------------|
+| CNAME | `www`       | `gzarruk.github.io`      |
 
-```
-uv run manage.py makemigrations
-```
+(Optional — to make the bare `yourdomain.com` also work, add four **A** records on
+host `@` pointing to GitHub's IPs: `185.199.108.153`, `185.199.109.153`,
+`185.199.110.153`, `185.199.111.153`.)
 
-Create database tables:
+**c. Back in GitHub Pages:** once DNS propagates (can take up to 24–48h), tick
+**Enforce HTTPS**.
 
-```
-uv run manage.py migrate
-```
-
-## Running server
-
-```bash
-uv run manage.py runserver
-```
-
-## Building front-end
-
-To build JavaScript and CSS files, first install npm packages:
-
-```bash
-npm install
-```
-
-Then build (and watch for changes locally):
-
-```bash
-npm run dev-watch
-```
-
-## Running Celery
-
-Celery can be used to run background tasks.
-
-Celery requires [Redis](https://redis.io/) as a message broker, so make sure
-it is installed and running.
-
-You can run it using:
-
-```bash
-celery -A gzarruk_site worker -l INFO --pool=solo
-```
-
-Or with celery beat (for scheduled tasks):
-
-```bash
-celery -A gzarruk_site worker -l INFO -B --pool=solo
-```
-
-Note: Using the `solo` pool is recommended for development but not for production.
-
-## Updating translations
-
-```bash
-uv run manage.py makemessages --all --ignore node_modules --ignore .venv
-uv run manage.py makemessages -d djangojs --all --ignore node_modules --ignore .venv
-uv run manage.py compilemessages --ignore .venv
-```
-
-## Google Authentication Setup
-
-To setup Google Authentication, follow the [instructions here](https://docs.allauth.org/en/latest/socialaccount/providers/google.html).
-
-## Installing Git commit hooks
-
-To install the Git commit hooks run the following:
-
-```shell
-$ uv run pre-commit install --install-hooks
-```
-
-Once these are installed they will be run on every commit.
-
-For more information see the [docs](https://docs.saaspegasus.com/code-structure#code-formatting).
-
-## Running Tests
-
-To run tests:
-
-```bash
-uv run manage.py test
-```
-
-Or to test a specific app/module:
-
-```bash
-uv run manage.py test apps.utils.tests.test_slugs
-```
-
-On Linux-based systems you can watch for changes using the following:
-
-```bash
-find . -name '*.py' | entr uv run manage.py test apps.utils.tests.test_slugs
-```
+## Editing later
+Everything is plain HTML/CSS in `index.html` — edit the name, tagline, bio, or link
+URLs directly, commit, and push. Colors live in the `:root` block near the top.
