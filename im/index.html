@@ -54,7 +54,7 @@
   .wrap {
     position: relative;
     z-index: 1;
-    max-width: 980px;
+    max-width: 1400px;
     margin: 0 auto;
     padding: clamp(32px, 6vw, 64px) 20px 60px;
   }
@@ -165,22 +165,23 @@
   }
   table.sheet-table {
     border-collapse: collapse;
-    width: 100%;
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     white-space: nowrap;
+    margin: 0 auto;
   }
   table.sheet-table td {
-    padding: 9px 14px;
+    padding: 9px 12px;
     border-bottom: 1px solid rgba(255,255,255,0.06);
     border-right: 1px solid rgba(255,255,255,0.06);
     color: var(--text);
   }
   table.sheet-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
-  table.sheet-table tr:first-child td {
+  table.sheet-table td.bold {
     font-family: 'Sora', sans-serif;
     font-weight: 700;
     color: #fff;
   }
+  table.sheet-table td.center { text-align: center; }
 
   .muted { color: var(--muted); font-size: 0.9rem; }
   .hidden { display: none !important; }
@@ -236,7 +237,7 @@
   <script>
     const CONFIG = {
       // Paste the OAuth Client ID you create in Google Cloud Console (see setup instructions above).
-      clientId: 'YOUR_OAUTH_CLIENT_ID.apps.googleusercontent.com',
+      clientId: '623680058729-l8epkcn43kl7s3077rtpgnctpt74vv4g.apps.googleusercontent.com',
       spreadsheetId: '1q6CuiPDr9u_XedMZGdEdUMNG7d2yitvBUI46O92Q-Uw',
       defaultTab: 'Templates',
       scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
@@ -319,22 +320,56 @@
       return (data.sheets || []).map((s) => s.properties.title);
     }
 
-    async function loadValues(tabName) {
-      const data = await sheetsFetch(`/values/${encodeURIComponent(tabName)}`);
-      return data.values || [];
+    // Fetches formatted values AND merge ranges, so cells like the per-day
+    // header and single-activity rows (e.g. "Day OFF") render with the same
+    // colspan/rowspan grouping as the sheet itself, instead of guessing.
+    async function loadGrid(tabName) {
+      const fields = 'sheets(data(rowData(values(formattedValue,effectiveFormat(textFormat(bold))))),merges)';
+      const data = await sheetsFetch(`?ranges=${encodeURIComponent(tabName)}&fields=${encodeURIComponent(fields)}`);
+      const sheet = (data.sheets || [])[0] || {};
+      const rowData = sheet.data?.[0]?.rowData || [];
+      const values = rowData.map((row) => (row.values || []).map((cell) => cell.formattedValue ?? ''));
+      const bold = rowData.map((row) => (row.values || []).map((cell) => !!cell.effectiveFormat?.textFormat?.bold));
+      return { values, bold, merges: sheet.merges || [] };
     }
 
-    function renderGrid(values) {
+    function renderGrid({ values, bold, merges }) {
       if (!values.length) {
         els.gridContainer.innerHTML = '<p class="muted">This tab is empty.</p>';
         return;
       }
-      const maxCols = Math.max(...values.map((row) => row.length));
+      const maxCols = Math.max(0, ...values.map((row) => row.length), ...merges.map((m) => m.endColumnIndex));
+      const maxRows = Math.max(values.length, ...merges.map((m) => m.endRowIndex));
+
+      const skip = new Set();
+      const spanAt = new Map();
+      for (const m of merges) {
+        const { startRowIndex: r0, endRowIndex: r1, startColumnIndex: c0, endColumnIndex: c1 } = m;
+        spanAt.set(`${r0},${c0}`, { rowSpan: r1 - r0, colSpan: c1 - c0 });
+        for (let r = r0; r < r1; r++) {
+          for (let c = c0; c < c1; c++) {
+            if (r === r0 && c === c0) continue;
+            skip.add(`${r},${c}`);
+          }
+        }
+      }
+
       let html = '<div class="grid-scroll"><table class="sheet-table">';
-      for (const row of values) {
+      for (let r = 0; r < maxRows; r++) {
         html += '<tr>';
         for (let c = 0; c < maxCols; c++) {
-          html += `<td>${escapeHtml(row[c])}</td>`;
+          const key = `${r},${c}`;
+          if (skip.has(key)) continue;
+          const span = spanAt.get(key);
+          const value = values[r]?.[c] ?? '';
+          const isBold = bold[r]?.[c] || false;
+          const classes = [];
+          if (isBold) classes.push('bold');
+          if (span?.colSpan > 1) classes.push('center');
+          const classAttr = classes.length ? ` class="${classes.join(' ')}"` : '';
+          const colspanAttr = span?.colSpan > 1 ? ` colspan="${span.colSpan}"` : '';
+          const rowspanAttr = span?.rowSpan > 1 ? ` rowspan="${span.rowSpan}"` : '';
+          html += `<td${classAttr}${colspanAttr}${rowspanAttr}>${escapeHtml(value)}</td>`;
         }
         html += '</tr>';
       }
@@ -346,8 +381,8 @@
       const tab = els.tabSelect.value || CONFIG.defaultTab;
       setStatus('Syncing…');
       try {
-        const values = await loadValues(tab);
-        renderGrid(values);
+        const grid = await loadGrid(tab);
+        renderGrid(grid);
         els.status.classList.remove('err');
         els.status.innerHTML = `<span class="dot"></span>Synced ${new Date().toLocaleTimeString()}`;
       } catch (err) {
