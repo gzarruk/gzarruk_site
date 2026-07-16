@@ -202,6 +202,54 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinning { animation: spin 0.55s linear infinite; }
+  .sync-status.error { color: #e08a6c; }
+  .sync-status.error::before {
+    background: #e08a6c;
+    box-shadow: 0 0 0 3px color-mix(in srgb, #e08a6c 25%, transparent);
+  }
+
+  /* ---- Plan bar ---- */
+
+  .plan-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 14px;
+    margin-bottom: 20px;
+  }
+  .pb-left, .pb-right { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pb-plan {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+  .pb-plan .input {
+    min-height: 34px;
+    width: auto;
+    min-width: 156px;
+    max-width: 240px;
+    padding: 6px 30px 6px 11px;
+    font-size: 13px;
+  }
+  .account-email {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: color-mix(in srgb, var(--color-text) 62%, transparent);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .account-email i { color: var(--color-accent); font-size: 14px; }
+  .account-note {
+    font-size: 12px;
+    color: color-mix(in srgb, var(--color-text) 40%, transparent);
+  }
 
   /* ---- Summary bar ---- */
 
@@ -629,6 +677,10 @@
     .im-chartcard { padding: 16px 12px; }
     .im-chartscroll { overflow-x: auto; overflow-y: hidden; }
     .im-chartsvg { min-width: 600px; }
+    .plan-bar { gap: 10px; }
+    .pb-left, .pb-right { width: 100%; justify-content: space-between; }
+    .pb-plan { flex: 1; }
+    .pb-plan .input { flex: 1; max-width: none; }
   }
 </style>
 </head>
@@ -642,6 +694,24 @@
       <h1 class="im-h1">Ironman 70.3 Training</h1>
       <p class="im-sub" id="subtitle"></p>
     </header>
+
+    <div class="plan-bar">
+      <div class="pb-left">
+        <label class="pb-plan">Plan
+          <select class="input" id="plan-select" aria-label="Select plan"></select>
+        </label>
+        <button type="button" class="btn btn-ghost btn-icon" id="plan-new" title="New plan" aria-label="New plan"><i class="ph ph-plus"></i></button>
+        <button type="button" class="btn btn-ghost btn-icon" id="plan-dup" title="Duplicate plan" aria-label="Duplicate plan"><i class="ph ph-copy"></i></button>
+        <button type="button" class="btn btn-ghost btn-icon" id="plan-rename" title="Rename plan" aria-label="Rename plan"><i class="ph ph-pencil-simple"></i></button>
+        <button type="button" class="btn btn-ghost btn-icon" id="plan-delete" title="Delete plan" aria-label="Delete plan"><i class="ph ph-trash"></i></button>
+      </div>
+      <div class="pb-right">
+        <button type="button" class="btn btn-secondary" id="export-btn"><i class="ph ph-download-simple"></i> Export</button>
+        <button type="button" class="btn btn-secondary" id="import-btn"><i class="ph ph-upload-simple"></i> Import</button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden />
+        <span id="account"></span>
+      </div>
+    </div>
 
     <div class="overview">
       <div class="ov-row">
@@ -704,9 +774,10 @@
       <div class="chart-legend" id="chart-legend"></div>
     </div>
 
-    <p class="foot-note">Drag a session card between days to reschedule it, or click the pencil to edit its details. Your edits are saved in this browser. Sample plan shown — the board reads from a JSON model, ready to swap for a live database or API fetch.</p>
+    <p class="foot-note">Drag a session card between days to reschedule it, or click the pencil to edit its details. Changes save to this device automatically — sign in to sync across devices, or export a plan as a file to keep and reuse as a template. The original sample plan stays as the template behind every week (Reset week reveals it).</p>
 
     <div id="modal-root"></div>
+    <div id="dialog-root"></div>
   </div>
 
   <script>
@@ -800,14 +871,16 @@
 
   const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const PHASES = ['Base', 'Build', 'Peak', 'Taper'];
-  const STORE = 'im703_v1';
+  const STORE = 'im703_v2';
+  const LEGACY = 'im703_v1';
   const AXIS_GREY = '#b2b6ca';
 
-  /* ---- Storage (localStorage today; replace with a real datastore later) ---- */
+  /* ---- Storage: localStorage is the always-on working store. When signed in,
+     each plan also syncs to Firestore (see the module script at the end). ---- */
 
   const load = (k) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
   const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-  const weekKey = (p, w) => STORE + '_week_' + p + '_' + w;
+  const remove = (k) => { try { localStorage.removeItem(k); } catch (e) {} };
 
   /* ---- Plan helpers ---- */
 
@@ -816,8 +889,8 @@
   const clampWeek = (p, w) => Math.max(0, Math.min(Number(w) || 0, phaseWeeks(p) - 1));
   const freshSessions = (p, w) => template(p, w).days.map((s, i) => ({ ...s, day: s.d, id: p + '-' + w + '-' + i }));
   const sessionsFor = (p, w) => {
-    const saved = load(weekKey(p, w));
-    return Array.isArray(saved) && saved.length ? saved : freshSessions(p, w);
+    const saved = plan && plan.weeks ? plan.weeks[p + '_' + w] : null;
+    return Array.isArray(saved) && saved.length ? saved.map((s) => ({ ...s })) : freshSessions(p, w);
   };
   const totalWeeks = () => PHASES.reduce((a, p) => a + phaseWeeks(p), 0);
   const weeksBefore = (phase) => PHASES.slice(0, PHASES.indexOf(phase)).reduce((a, p) => a + phaseWeeks(p), 0);
@@ -851,25 +924,112 @@
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-  /* ---- State ---- */
+  /* =========================================================================
+     Plans — a named plan is the unit of persistence. `planData` (the template
+     above) stays pristine; a plan stores only the weeks you've edited as an
+     overlay, plus done / start / view / chart prefs. A new plan starts empty,
+     so it renders as the pure template until you change something, and
+     "Reset week" just drops that week's overlay to reveal the template again.
+     ========================================================================= */
 
-  const view = load(STORE + '_view') || {};
-  const initPhase = (view.phase && planData[view.phase]) ? view.phase : 'Base';
-  const initWeek = clampWeek(initPhase, view.week);
+  const uid4 = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const now = () => Date.now();
+  const planKey = (id) => STORE + '_plan_' + id;
+  const loadIndex = () => load(STORE + '_plans') || [];
+  const saveIndex = (ix) => save(STORE + '_plans', ix);
+  const loadPlanLocal = (id) => load(planKey(id));
+  const savePlanLocal = (p) => save(planKey(p.id), p);
+  const currentId = () => load(STORE + '_current');
+  const setCurrentId = (id) => save(STORE + '_current', id);
+
+  let plans = [];   // index: [{ id, name }]
+  let plan = null;  // the current plan object
+
+  const blankPlan = (name) => ({
+    id: 'p-' + uid4(), name: name || 'My plan', start: defaultStart(),
+    weeks: {}, done: {}, chartmode: 'weekly', charthidden: {},
+    view: { phase: 'Base', week: 0 }, updatedAt: now(),
+  });
+
+  // One-time migration of the older single-plan im703_v1_* keys into a plan.
+  function migrateLegacy() {
+    const weeks = {};
+    for (const p of PHASES) for (let w = 0; w < phaseWeeks(p); w++) {
+      const v = load(LEGACY + '_week_' + p + '_' + w);
+      if (Array.isArray(v) && v.length) weeks[p + '_' + w] = v;
+    }
+    const view = load(LEGACY + '_view') || {};
+    return {
+      id: 'p-' + uid4(), name: 'My plan',
+      start: load(LEGACY + '_start') || defaultStart(),
+      weeks, done: load(LEGACY + '_done') || {},
+      chartmode: load(LEGACY + '_chartmode') || 'weekly',
+      charthidden: load(LEGACY + '_charthidden') || {},
+      view: { phase: (view.phase && planData[view.phase]) ? view.phase : 'Base', week: Number(view.week) || 0 },
+      updatedAt: now(),
+    };
+  }
+
+  function hasLegacy() {
+    if (load(LEGACY + '_done') || load(LEGACY + '_view') || load(LEGACY + '_start')) return true;
+    for (const p of PHASES) for (let w = 0; w < phaseWeeks(p); w++) if (load(LEGACY + '_week_' + p + '_' + w)) return true;
+    return false;
+  }
+
+  function ensurePlans() {
+    plans = loadIndex();
+    if (!plans.length) {
+      const p = hasLegacy() ? migrateLegacy() : blankPlan('My plan');
+      savePlanLocal(p);
+      plans = [{ id: p.id, name: p.name }];
+      saveIndex(plans);
+      setCurrentId(p.id);
+    }
+    let cur = loadPlanLocal(currentId());
+    if (!cur) { cur = loadPlanLocal(plans[0].id); setCurrentId(plans[0].id); }
+    return cur;
+  }
+
+  /* ---- Working state: UI flags + a live mirror of the current plan ---- */
 
   const state = {
-    phase: initPhase,
-    week: initWeek,
-    sessions: sessionsFor(initPhase, initWeek),
-    done: load(STORE + '_done') || {},
-    dragId: null,
-    editingId: null,
-    chartMode: load(STORE + '_chartmode') || 'weekly',
-    chartHidden: load(STORE + '_charthidden') || {},
-    hoverIdx: null,
-    status: 'Loading…',
-    start: load(STORE + '_start') || defaultStart(),
+    phase: 'Base', week: 0, sessions: [],
+    done: {}, start: defaultStart(),
+    chartMode: 'weekly', chartHidden: {},
+    dragId: null, editingId: null, hoverIdx: null,
+    status: 'Saved on this device',
   };
+
+  // Copy a plan's persistent fields into the working state.
+  function adoptPlan(p) {
+    plan = p;
+    const vw = p.view || {};
+    state.phase = (vw.phase && planData[vw.phase]) ? vw.phase : 'Base';
+    state.week = clampWeek(state.phase, vw.week);
+    state.start = p.start || defaultStart();
+    state.done = p.done || {};
+    state.chartMode = p.chartmode || 'weekly';
+    state.chartHidden = p.charthidden || {};
+    state.sessions = sessionsFor(state.phase, state.week);
+    state.dragId = null; state.editingId = null; state.hoverIdx = null;
+  }
+
+  // Fold the working state back into the current plan, persist, and sync.
+  function persistPlan() {
+    plan.start = state.start;
+    plan.done = state.done;
+    plan.chartmode = state.chartMode;
+    plan.charthidden = state.chartHidden;
+    plan.view = { phase: state.phase, week: state.week };
+    plan.updatedAt = now();
+    savePlanLocal(plan);
+    schedulePush();
+  }
+
+  const setWeekSessions = (p, w, sessions) => { plan.weeks[p + '_' + w] = sessions; };
+  const clearWeekSessions = (p, w) => { delete plan.weeks[p + '_' + w]; };
+
+  adoptPlan(ensurePlans());
 
   /* ---- DOM refs ---- */
 
@@ -883,7 +1043,11 @@
     summary: $('summary'), board: $('board'),
     chartCompleted: $('chart-completed'), chartmodeSeg: $('chartmode-seg'),
     chartScroll: $('chart-scroll'), chartSvg: $('chart-svg'), chartTip: $('chart-tip'),
-    chartLegend: $('chart-legend'), modalRoot: $('modal-root'),
+    chartLegend: $('chart-legend'), modalRoot: $('modal-root'), dialogRoot: $('dialog-root'),
+    planSelect: $('plan-select'), planNew: $('plan-new'), planDup: $('plan-dup'),
+    planRename: $('plan-rename'), planDelete: $('plan-delete'),
+    exportBtn: $('export-btn'), importBtn: $('import-btn'), importFile: $('import-file'),
+    account: $('account'),
   };
 
   /* =========================================================================
@@ -1239,34 +1403,326 @@
     state.week = clampWeek(phase, wi);
     state.sessions = sessionsFor(state.phase, state.week);
     state.dragId = null;
-    save(STORE + '_view', { phase: state.phase, week: state.week });
+    persistPlan();
     renderAll();
   }
 
   function persistSessions(sessions) {
     state.sessions = sessions;
-    save(weekKey(state.phase, state.week), sessions);
+    setWeekSessions(state.phase, state.week, sessions);
+    persistPlan();
     renderSummary();
     renderBoard();
     renderChart();
   }
 
-  function sync() {
-    state.status = 'Synced ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    els.syncIcon.classList.remove('spinning');
+  /* ---- Status ---- */
+
+  const timeStr = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  function setStatus(text, isError) {
+    state.status = text;
+    els.status.classList.toggle('error', !!isError);
     renderStatus();
+  }
+
+  /* =========================================================================
+     Cloud sync bridge — talks to the optional Firebase module (window.imCloud).
+     Everything is guarded, so the planner works fully with no cloud at all.
+     Strategy: last-write-wins by updatedAt; localStorage is never blocked on
+     the network.
+     ========================================================================= */
+
+  let authUser = null;
+  let pushTimer = null;
+
+  const cloudReady = () => !!(window.imCloud && window.imCloud.configured);
+
+  function schedulePush() {
+    if (!cloudReady() || !authUser) return;
+    setStatus('Saving…');
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(() => pushPlan(plan), 900);
+  }
+  async function pushPlan(p) {
+    if (!cloudReady() || !authUser) return;
+    try { await window.imCloud.savePlan(p); setStatus('Synced ' + timeStr()); }
+    catch (e) { console.error(e); setStatus('Sync failed — saved locally', true); }
+  }
+  async function cloudDelete(id) {
+    if (!cloudReady() || !authUser) return;
+    try { await window.imCloud.deletePlan(id); } catch (e) { console.error(e); }
+  }
+
+  // Union local + cloud plans by id; newer updatedAt wins. Pull cloud→local,
+  // then push anything the cloud is missing or that changed locally.
+  function mergeCloudPlans(cloudPlans) {
+    const idx = {};
+    plans.forEach((e) => { idx[e.id] = e; });
+    const cloudById = {};
+    cloudPlans.forEach((cp) => { if (cp && cp.id) cloudById[cp.id] = cp; });
+
+    cloudPlans.forEach((cp) => {
+      if (!cp || !cp.id) return;
+      const lp = loadPlanLocal(cp.id);
+      if (!lp || (cp.updatedAt || 0) >= (lp.updatedAt || 0)) {
+        savePlanLocal(cp);
+        if (!idx[cp.id]) { const e = { id: cp.id, name: cp.name }; plans.push(e); idx[cp.id] = e; }
+        else idx[cp.id].name = cp.name;
+      }
+    });
+    plans.forEach((e) => {
+      const lp = loadPlanLocal(e.id);
+      const cp = cloudById[e.id];
+      if (lp && (!cp || (lp.updatedAt || 0) > (cp.updatedAt || 0))) pushPlan(lp);
+    });
+    saveIndex(plans);
+
+    let cur = loadPlanLocal(currentId());
+    if (!cur) { cur = loadPlanLocal(plans[0].id); setCurrentId(plans[0].id); }
+    adoptPlan(cur);
+  }
+
+  async function pullFromCloud() {
+    setStatus('Syncing…');
+    try {
+      const cloudPlans = await window.imCloud.loadPlans();
+      mergeCloudPlans(cloudPlans);
+      setStatus('Synced ' + timeStr());
+      renderAll();
+      renderPlanBar();
+    } catch (e) { console.error(e); setStatus('Sync failed — saved locally', true); }
+  }
+
+  async function onAuth(user) {
+    authUser = user;
+    renderPlanBar();
+    if (user) await pullFromCloud();
+    else setStatus('Saved on this device');
+  }
+
+  function bindCloud() {
+    renderPlanBar();
+    if (cloudReady()) window.imCloud.onAuth(onAuth);
+  }
+
+  /* =========================================================================
+     Plans: create / switch / rename / duplicate / delete
+     ========================================================================= */
+
+  function switchPlan(id) {
+    const p = loadPlanLocal(id);
+    if (!p) return;
+    setCurrentId(id);
+    adoptPlan(p);
+    renderAll();
+    renderPlanBar();
+  }
+
+  function addPlan(p) {
+    savePlanLocal(p);
+    plans.push({ id: p.id, name: p.name });
+    saveIndex(plans);
+    setCurrentId(p.id);
+    adoptPlan(p);
+    if (cloudReady() && authUser) pushPlan(p);
+    renderAll();
+    renderPlanBar();
+  }
+
+  function renamePlan(id, name) {
+    const p = loadPlanLocal(id);
+    if (!p) return;
+    p.name = name; p.updatedAt = now();
+    savePlanLocal(p);
+    const e = plans.find((x) => x.id === id); if (e) e.name = name;
+    saveIndex(plans);
+    if (plan.id === id) plan.name = name;
+    if (cloudReady() && authUser) pushPlan(p);
+    renderPlanBar();
+  }
+
+  function duplicatePlan(name) {
+    const copy = JSON.parse(JSON.stringify(plan));
+    copy.id = 'p-' + uid4();
+    copy.name = name;
+    copy.updatedAt = now();
+    addPlan(copy);
+  }
+
+  function deletePlan(id) {
+    plans = plans.filter((x) => x.id !== id);
+    saveIndex(plans);
+    remove(planKey(id));
+    cloudDelete(id);
+    if (!plans.length) {
+      const p = blankPlan('My plan');
+      savePlanLocal(p);
+      plans = [{ id: p.id, name: p.name }];
+      saveIndex(plans);
+      setCurrentId(p.id);
+      adoptPlan(p);
+      if (cloudReady() && authUser) pushPlan(p);
+    } else if (currentId() === id) {
+      setCurrentId(plans[0].id);
+      adoptPlan(loadPlanLocal(plans[0].id));
+    }
+    renderAll();
+    renderPlanBar();
+  }
+
+  /* ---- Export / Import (a saved file is a reusable template) ---- */
+
+  function exportPlan() {
+    const payload = { _type: 'im703-plan', version: 1, exportedFrom: 'gzarruk.com/im', plan: plan };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (plan.name || 'plan').replace(/[^\w-]+/g, '_').toLowerCase() + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
+
+  function importPlanFile(file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let src;
+      try { const parsed = JSON.parse(reader.result); src = parsed.plan || parsed; }
+      catch (e) { setStatus('Import failed — not a valid plan file', true); return; }
+      if (!src || typeof src !== 'object') { setStatus('Import failed — not a valid plan file', true); return; }
+      const p = blankPlan(src.name || file.name.replace(/\.json$/i, ''));
+      p.start = src.start || defaultStart();
+      p.weeks = (src.weeks && typeof src.weeks === 'object') ? src.weeks : {};
+      p.done = (src.done && typeof src.done === 'object') ? src.done : {};
+      p.chartmode = src.chartmode === 'cumulative' ? 'cumulative' : 'weekly';
+      p.charthidden = (src.charthidden && typeof src.charthidden === 'object') ? src.charthidden : {};
+      p.view = (src.view && planData[src.view.phase]) ? { phase: src.view.phase, week: Number(src.view.week) || 0 } : { phase: 'Base', week: 0 };
+      p.updatedAt = now();
+      addPlan(p);
+      setStatus('Imported "' + p.name + '"');
+    };
+    reader.readAsText(file);
+  }
+
+  /* ---- Small dialogs (name entry / confirm) reusing the modal styles ---- */
+
+  function nameDialog(title, initial, okLabel) {
+    return new Promise((resolve) => {
+      els.dialogRoot.innerHTML =
+        '<div class="modal-backdrop" id="nd-backdrop">' +
+          '<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="nd-title" style="width: min(400px, 100%);">' +
+            '<div class="dialog-head"><h3 id="nd-title">' + esc(title) + '</h3>' +
+              '<button type="button" class="btn btn-icon btn-ghost" data-nd="cancel" aria-label="Close"><i class="ph ph-x"></i></button></div>' +
+            '<div class="field"><label for="nd-input">Name</label><input type="text" class="input" id="nd-input" value="' + esc(initial || '') + '" maxlength="60" /></div>' +
+            '<div class="dialog-foot" style="justify-content: flex-end;">' +
+              '<span class="right"><button type="button" class="btn btn-secondary" data-nd="cancel">Cancel</button>' +
+              '<button type="button" class="btn btn-primary" data-nd="ok">' + esc(okLabel || 'Save') + '</button></span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      const input = els.dialogRoot.querySelector('#nd-input');
+      input.focus();
+      input.select();
+      const close = (val) => { els.dialogRoot.innerHTML = ''; els.dialogRoot.onclick = null; resolve(val); };
+      els.dialogRoot.onclick = (e) => {
+        if (e.target.id === 'nd-backdrop') return close(null);
+        const b = e.target.closest('[data-nd]');
+        if (!b) return;
+        if (b.dataset.nd === 'cancel') close(null);
+        else close(input.value.trim() || null);
+      };
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter') close(input.value.trim() || null);
+        else if (e.key === 'Escape') close(null);
+      };
+    });
+  }
+
+  function confirmDialog(title, message, okLabel) {
+    return new Promise((resolve) => {
+      els.dialogRoot.innerHTML =
+        '<div class="modal-backdrop" id="cf-backdrop">' +
+          '<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="cf-title" style="width: min(400px, 100%);">' +
+            '<div class="dialog-head"><h3 id="cf-title">' + esc(title) + '</h3></div>' +
+            '<p style="font-size: 14px; line-height: 1.5; margin: 0; color: color-mix(in srgb, var(--color-text) 66%, transparent);">' + esc(message) + '</p>' +
+            '<div class="dialog-foot" style="justify-content: flex-end;">' +
+              '<span class="right"><button type="button" class="btn btn-secondary" data-cf="cancel">Cancel</button>' +
+              '<button type="button" class="btn btn-primary" data-cf="ok">' + esc(okLabel || 'Confirm') + '</button></span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      const close = (val) => { els.dialogRoot.innerHTML = ''; els.dialogRoot.onclick = null; resolve(val); };
+      els.dialogRoot.onclick = (e) => {
+        if (e.target.id === 'cf-backdrop') return close(false);
+        const b = e.target.closest('[data-cf]');
+        if (b) close(b.dataset.cf === 'ok');
+      };
+    });
+  }
+
+  /* ---- Plan bar rendering ---- */
+
+  function renderPlanBar() {
+    els.planSelect.innerHTML = plans.map((e) =>
+      '<option value="' + esc(e.id) + '"' + (plan && e.id === plan.id ? ' selected' : '') + '>' + esc(e.name) + '</option>').join('');
+    els.planDelete.disabled = plans.length <= 1;
+    if (!cloudReady()) {
+      els.account.innerHTML = '<span class="account-note" title="Cloud sync unavailable — saved on this device">Local only</span>';
+    } else if (authUser) {
+      els.account.innerHTML =
+        '<span class="account-email"><i class="ph ph-cloud-check"></i>' + esc(authUser.email || 'Signed in') + '</span>' +
+        '<button type="button" class="btn btn-ghost" data-acct="signout">Sign out</button>';
+    } else {
+      els.account.innerHTML = '<button type="button" class="btn btn-secondary" data-acct="signin"><i class="ph ph-google-logo"></i> Sign in to sync</button>';
+    }
   }
 
   /* =========================================================================
      Events
      ========================================================================= */
 
+  // Plan bar
+  els.planSelect.addEventListener('change', (e) => switchPlan(e.target.value));
+  els.planNew.addEventListener('click', async () => {
+    const name = await nameDialog('New plan', 'My plan ' + (plans.length + 1), 'Create');
+    if (name) addPlan(blankPlan(name));
+  });
+  els.planDup.addEventListener('click', async () => {
+    const name = await nameDialog('Duplicate plan', (plan.name || 'Plan') + ' copy', 'Duplicate');
+    if (name) duplicatePlan(name);
+  });
+  els.planRename.addEventListener('click', async () => {
+    const name = await nameDialog('Rename plan', plan.name || '', 'Rename');
+    if (name) renamePlan(plan.id, name);
+  });
+  els.planDelete.addEventListener('click', async () => {
+    if (plans.length <= 1) return;
+    const ok = await confirmDialog('Delete plan',
+      'Delete "' + (plan.name || 'this plan') + '"? This removes it from this device' + (authUser ? ' and the cloud' : '') + '.', 'Delete');
+    if (ok) deletePlan(plan.id);
+  });
+  els.exportBtn.addEventListener('click', exportPlan);
+  els.importBtn.addEventListener('click', () => els.importFile.click());
+  els.importFile.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (f) importPlanFile(f);
+    e.target.value = '';
+  });
+  els.account.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-acct]');
+    if (!b || !cloudReady()) return;
+    if (b.dataset.acct === 'signin') window.imCloud.signIn().catch((err) => { console.error(err); setStatus('Sign-in failed', true); });
+    else if (b.dataset.acct === 'signout') window.imCloud.signOut();
+  });
+
   // Plan overview
   els.startInput.addEventListener('change', (e) => {
     const v = e.target.value;
     if (!v) return;
     state.start = v;
-    save(STORE + '_start', v);
+    persistPlan();
     renderAll();
   });
   els.timeline.addEventListener('click', (e) => {
@@ -1281,15 +1737,20 @@
   els.prevWeek.addEventListener('click', () => { if (state.week > 0) select(state.phase, state.week - 1); });
   els.nextWeek.addEventListener('click', () => { if (state.week < phaseWeeks(state.phase) - 1) select(state.phase, state.week + 1); });
   els.syncBtn.addEventListener('click', () => {
-    state.status = 'Syncing…';
-    els.syncIcon.classList.add('spinning');
-    renderStatus();
-    setTimeout(sync, 550);
+    if (cloudReady() && authUser) {
+      els.syncIcon.classList.add('spinning');
+      pullFromCloud().finally(() => els.syncIcon.classList.remove('spinning'));
+    } else if (cloudReady()) {
+      window.imCloud.signIn().catch((err) => { console.error(err); setStatus('Sign-in failed', true); });
+    } else {
+      setStatus('Saved on this device');
+    }
   });
   els.resetBtn.addEventListener('click', () => {
-    try { localStorage.removeItem(weekKey(state.phase, state.week)); } catch (e) {}
+    clearWeekSessions(state.phase, state.week);
     state.sessions = freshSessions(state.phase, state.week);
     state.dragId = null;
+    persistPlan();
     renderSummary();
     renderBoard();
     renderChart();
@@ -1307,7 +1768,7 @@
         persistSessions(state.sessions.filter((s) => s.id !== id));
       } else if (act.dataset.act === 'done') {
         state.done = { ...state.done, [id]: !state.done[id] };
-        save(STORE + '_done', state.done);
+        persistPlan();
         renderSummary();
         renderBoard();
         renderChart();
@@ -1317,10 +1778,11 @@
     const add = e.target.closest('.add-btn');
     if (add) {
       const day = add.dataset.day;
-      const id = 'cus-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      const id = 'cus-' + uid4();
       const sessions = [...state.sessions, { d: day, day, disc: 'Swim', focus: '', dur: '0:30', zone: 'Z2', desc: '', id, custom: true }];
       state.sessions = sessions;
-      save(weekKey(state.phase, state.week), sessions);
+      setWeekSessions(state.phase, state.week, sessions);
+      persistPlan();
       state.editingId = id;
       renderSummary();
       renderBoard();
@@ -1387,7 +1849,7 @@
   els.chartmodeSeg.addEventListener('change', (e) => {
     if (e.target.name !== 'chartmode') return;
     state.chartMode = e.target.value;
-    save(STORE + '_chartmode', state.chartMode);
+    persistPlan();
     renderChart();
   });
   els.chartLegend.addEventListener('click', (e) => {
@@ -1395,7 +1857,7 @@
     if (!pill) return;
     const n = pill.dataset.series;
     state.chartHidden = { ...state.chartHidden, [n]: !state.chartHidden[n] };
-    save(STORE + '_charthidden', state.chartHidden);
+    persistPlan();
     renderChart();
   });
 
@@ -1435,8 +1897,81 @@
   /* ---- Init ---- */
 
   renderAll();
-  sync();
-  setInterval(sync, 60000);
+  renderPlanBar();
+
+  // The Firebase module (below) is a deferred module, so it loads after this
+  // classic script. Bind when it signals ready; if it never loads, stay local.
+  if (window.imCloud) bindCloud();
+  else window.addEventListener('imcloud:ready', bindCloud, { once: true });
+  </script>
+
+  <!-- Optional cloud sync: Firebase Auth (Google) + Firestore. Loaded as an ES
+       module from the gstatic CDN. If it fails to load or isn't configured, the
+       planner above runs fully on localStorage. Firebase web API keys are safe
+       to ship publicly — access is enforced by the Firestore security rules
+       (see firestore.rules); deploy those before relying on sync. -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
+    import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyDeJrxAeHHIBRTdfYBFBToDV8djv-p1nfo',
+      authDomain: 'local-terminus-467316-m8.firebaseapp.com',
+      projectId: 'local-terminus-467316-m8',
+      storageBucket: 'local-terminus-467316-m8.firebasestorage.app',
+      messagingSenderId: '623680058729',
+      appId: '1:623680058729:web:53a37a15ef2363692139f8',
+    };
+
+    try {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      const provider = new GoogleAuthProvider();
+
+      let uid = null;
+      let lastUser = null;
+      let fired = false;
+      const authCbs = [];
+
+      onAuthStateChanged(auth, (user) => {
+        uid = user ? user.uid : null;
+        lastUser = user;
+        fired = true;
+        authCbs.forEach((cb) => { try { cb(user); } catch (e) { console.error(e); } });
+      });
+
+      // Each user's plans live at users/{uid}/plans/{planId}; the whole plan is
+      // stored as one JSON string field to sidestep Firestore's type quirks.
+      window.imCloud = {
+        configured: true,
+        onAuth(cb) { authCbs.push(cb); if (fired) cb(lastUser); },
+        signIn() { return signInWithPopup(auth, provider); },
+        signOut() { return signOut(auth); },
+        async loadPlans() {
+          if (!uid) throw new Error('Not signed in');
+          const snap = await getDocs(collection(db, 'users', uid, 'plans'));
+          return snap.docs.map((d) => { try { return JSON.parse(d.data().data); } catch (e) { return null; } }).filter(Boolean);
+        },
+        async savePlan(p) {
+          if (!uid) throw new Error('Not signed in');
+          await setDoc(doc(db, 'users', uid, 'plans', p.id), {
+            name: p.name || 'Plan',
+            updatedAt: p.updatedAt || Date.now(),
+            data: JSON.stringify(p),
+          });
+        },
+        async deletePlan(id) {
+          if (!uid) return;
+          await deleteDoc(doc(db, 'users', uid, 'plans', id));
+        },
+      };
+    } catch (e) {
+      console.error('Cloud sync unavailable; running local-only.', e);
+      window.imCloud = { configured: false };
+    }
+    window.dispatchEvent(new Event('imcloud:ready'));
   </script>
 </body>
 </html>
