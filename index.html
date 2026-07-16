@@ -10,185 +10,337 @@
 <meta property="og:title" content="Gustavo A. Zarruk — Industrial Data Scientist" />
 <meta property="og:description" content="PhD engineer and data science leader building physics-based and data-driven solutions for asset-heavy industries, particularly energy." />
 <meta property="og:type" content="website" />
-<meta property="og:image" content="assets/profile.jpeg" />
+<meta property="og:url" content="https://www.gzarruk.com/" />
+<meta property="og:image" content="https://www.gzarruk.com/assets/profile.jpeg" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="assets/style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+<link rel="stylesheet" href="assets/nocturne.css" />
 
 <style>
-  .wrap {
-    max-width: 780px;
-    padding: clamp(48px, 9vw, 110px) 22px 60px;
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    min-height: 100vh;
   }
 
-  /* Hero */
-  .hero { text-align: center; }
+  /* ---- Sidebar ---- */
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    min-height: 100vh;
+    padding: 48px 36px;
+    background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+    border-right: 1px solid var(--color-divider);
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
 
   .avatar {
-    width: clamp(132px, 34vw, 172px);
-    height: clamp(132px, 34vw, 172px);
+    flex: 0 0 108px;
+    width: 108px;
+    height: 108px;
+    min-height: 108px;
     border-radius: 50%;
-    margin: 0 auto 26px;
-    position: relative;
-    padding: 4px;
-    background: var(--grad);
-    box-shadow: 0 18px 50px -12px rgba(47,111,237,0.55);
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px var(--color-accent),
+      0 16px 42px -14px color-mix(in srgb, var(--color-accent) 52%, transparent);
   }
-  .avatar img,
-  .avatar .monogram {
+  .avatar img {
     width: 100%;
     height: 100%;
-    border-radius: 50%;
     object-fit: cover;
+    object-position: 56% 30%;
     display: block;
-    background: var(--bg-2);
-  }
-  .avatar .monogram {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Sora', sans-serif;
-    font-weight: 800;
-    font-size: clamp(38px, 10vw, 52px);
-    letter-spacing: 1px;
-    color: #fff;
-    background: linear-gradient(135deg, #1b1730, #2a1d3d);
-  }
-  /* If the photo fails to load, show the monogram instead */
-  .avatar img.broken { display: none; }
-  .avatar img.broken + .monogram { display: flex; }
-
-  h1 {
-    font-size: clamp(2.1rem, 7vw, 3.3rem);
   }
 
-  .tagline {
-    display: inline-block;
-    font-size: clamp(1rem, 3.4vw, 1.35rem);
-    padding: 6px 2px;
-    margin-bottom: 26px;
+  .sidebar h1 {
+    font-size: 27px;
+    letter-spacing: -0.015em;
+    margin: 0 0 9px;
+    color: var(--color-text);
   }
 
   .bio {
-    color: var(--muted);
-    font-size: clamp(1rem, 2.5vw, 1.09rem);
-    max-width: 620px;
-    margin: 0 auto 40px;
-    text-align: center;
+    font-size: 14px;
+    line-height: 1.62;
+    margin: 0;
+    text-wrap: pretty;
+    color: color-mix(in srgb, var(--color-text) 72%, transparent);
   }
-  .bio strong { color: var(--text); font-weight: 600; }
 
-  /* Link buttons */
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tags .tag { white-space: nowrap; }
+
   .links {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    max-width: 460px;
-    margin: 0 auto;
+    gap: 8px;
+    margin-top: 2px;
   }
-
-  .link {
+  .link-row {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 16px 20px;
-    border-radius: var(--radius);
-    background: var(--card);
-    border: 1px solid var(--card-border);
-    color: var(--text);
+    gap: 12px;
+    padding: 11px 13px;
+    border: 1px solid var(--color-divider);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
     text-decoration: none;
-    font-weight: 600;
-    font-size: 1.02rem;
-    backdrop-filter: blur(10px);
-    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    font-size: 14px;
+    transition: border-color 0.12s ease, background 0.12s ease;
   }
-  .link:hover {
-    transform: translateY(-3px);
-    border-color: rgba(255,255,255,0.28);
-    background: var(--grad-soft);
-    box-shadow: 0 14px 34px -16px rgba(47,111,237,0.6);
+  .link-row:hover {
+    color: var(--color-text);
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
   }
-  .link .icon {
-    flex: 0 0 40px;
-    width: 40px; height: 40px;
+  .link-row > i:first-child { font-size: 18px; color: var(--color-accent); }
+  .link-row .label { flex: 1; }
+  .link-row .out { font-size: 14px; color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+
+  .sidebar-foot {
+    margin-top: auto;
+    padding-top: 24px;
+    font-size: 11px;
+    color: color-mix(in srgb, var(--color-text) 45%, transparent);
+  }
+
+  /* ---- Main ---- */
+
+  main {
+    padding: 64px clamp(28px, 5vw, 72px);
+    max-width: 860px;
+  }
+
+  main section { margin-bottom: 44px; }
+  main section:last-child { margin-bottom: 0; }
+  main .rule-fade { margin-bottom: 40px; }
+
+  .about .kicker { margin-bottom: 16px; }
+  .about .lead {
+    font-size: 18px;
+    line-height: 1.68;
+    margin: 0 0 14px;
+    text-wrap: pretty;
+    color: var(--color-text);
+  }
+  .about .rest {
+    font-size: 16px;
+    line-height: 1.72;
+    margin: 0;
+    text-wrap: pretty;
+    color: color-mix(in srgb, var(--color-text) 74%, transparent);
+  }
+
+  .experience .kicker { margin-bottom: 22px; }
+  .exp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .exp-card {
+    padding: 20px;
+    gap: 11px;
+    transition: box-shadow 0.16s ease, transform 0.16s ease;
+  }
+  .exp-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent),
+      var(--shadow-md);
+  }
+  .exp-card.span-2 { grid-column: span 2; }
+  .exp-head {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+  .exp-chip {
+    flex: none;
+    width: 34px;
+    height: 34px;
     display: grid;
     place-items: center;
-    border-radius: 12px;
-    background: var(--grad);
-    color: #fff;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    color: var(--color-accent);
   }
-  .link .icon svg { width: 20px; height: 20px; display: block; }
-  .link .label { flex: 1; }
-  .link .chev { color: var(--muted); transition: transform 0.18s ease; }
-  .link:hover .chev { transform: translateX(4px); color: var(--text); }
+  .exp-chip i { font-size: 18px; }
 
-  footer {
-    margin-top: 56px;
+  .contact .kicker { margin-bottom: 16px; }
+  .contact h2 {
+    font-size: 26px;
+    letter-spacing: -0.015em;
+    margin: 0 0 8px;
+    color: var(--color-text);
   }
+  .contact .note {
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0 0 22px;
+    color: color-mix(in srgb, var(--color-text) 66%, transparent);
+  }
+  .contact form {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    max-width: 480px;
+  }
+  .contact .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 13px;
+  }
+  .contact .btn-primary { align-self: flex-start; margin-top: 2px; }
 
-  @media (prefers-reduced-motion: reduce) {
-    .link { transition: none; }
+  /* ---- Responsive ---- */
+
+  @media (max-width: 920px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar {
+      position: static;
+      height: auto;
+      min-height: 0;
+      border-right: none;
+      border-bottom: 1px solid var(--color-divider);
+    }
   }
 </style>
 </head>
 <body>
-  <main class="wrap">
-    <section class="hero">
+  <div class="layout">
+
+    <aside class="sidebar">
       <div class="avatar">
-        <!-- Drop your photo at assets/profile.jpeg. If it's missing, the initials monogram shows automatically. -->
-        <img src="assets/profile.jpeg" alt="Gustavo A. Zarruk"
-             onerror="this.classList.add('broken')" />
-        <div class="monogram" aria-hidden="true">GZ</div>
+        <img src="assets/profile.jpeg" alt="Gustavo A. Zarruk" />
       </div>
 
-      <h1>Gustavo A. Zarruk</h1>
-      <div class="tagline">Industrial Data Scientist</div>
+      <div>
+        <h1>Gustavo A. Zarruk</h1>
+        <span class="kicker kicker-sm">Industrial Data Scientist</span>
+      </div>
 
-      <p class="bio">
-        PhD engineer and data science leader with <strong>20+ years</strong> spanning academic
-        research, applied R&amp;D, and industrial consultancy. I combine rigorous physics-based
-        and data-driven modeling with hands-on delivery of scalable analytics for asset-heavy
-        industries, <strong>particularly energy</strong> — leading multidisciplinary teams,
-        advising on data architecture and analytics strategy, and translating complex methods
-        into operational value.
-      </p>
+      <p class="bio">PhD engineer &amp; data science leader. 20+ years across academic research, applied R&amp;D, and industry — particularly energy.</p>
+
+      <div class="tags">
+        <span class="tag tag-accent">PhD engineer</span>
+        <span class="tag tag-neutral">20+ years</span>
+        <span class="tag tag-neutral">Energy focus</span>
+      </div>
 
       <nav class="links" aria-label="Profiles and contact">
-        <a class="link" href="https://www.linkedin.com/in/gzarruk/" target="_blank" rel="noopener">
-          <span class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5A2.5 2.5 0 1 0 5 8.5a2.5 2.5 0 0 0-.02-5ZM3 9h4v12H3V9Zm6 0h3.8v1.64h.05c.53-.95 1.83-1.95 3.77-1.95 4.03 0 4.78 2.5 4.78 5.75V21h-4v-5.6c0-1.34-.02-3.06-1.87-3.06-1.87 0-2.15 1.46-2.15 2.96V21H9V9Z"/></svg>
-          </span>
+        <a class="link-row" href="https://www.linkedin.com/in/gzarruk/" target="_blank" rel="noopener">
+          <i class="ph ph-linkedin-logo" aria-hidden="true"></i>
           <span class="label">LinkedIn</span>
-          <span class="chev" aria-hidden="true">→</span>
+          <i class="ph ph-arrow-up-right out" aria-hidden="true"></i>
         </a>
-
-        <a class="link" href="https://github.com/gzarruk" target="_blank" rel="noopener">
-          <span class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.36 9.36 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.79-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
-          </span>
+        <a class="link-row" href="https://github.com/gzarruk" target="_blank" rel="noopener">
+          <i class="ph ph-github-logo" aria-hidden="true"></i>
           <span class="label">GitHub</span>
-          <span class="chev" aria-hidden="true">→</span>
+          <i class="ph ph-arrow-up-right out" aria-hidden="true"></i>
         </a>
-
-        <a class="link" href="mailto:gzarruk@gmail.com">
-          <span class="icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-          </span>
+        <a class="link-row" href="mailto:gzarruk@gmail.com">
+          <i class="ph ph-envelope-simple" aria-hidden="true"></i>
           <span class="label">Email</span>
-          <span class="chev" aria-hidden="true">→</span>
+          <i class="ph ph-arrow-up-right out" aria-hidden="true"></i>
         </a>
       </nav>
-    </section>
 
-    <footer>
-      © <span id="year"></span> Gustavo A. Zarruk
-    </footer>
-  </main>
+      <div class="sidebar-foot">© <span id="year">2026</span> Gustavo A. Zarruk</div>
+    </aside>
+
+    <main>
+      <section class="about">
+        <span class="kicker">About</span>
+        <p class="lead">I combine rigorous physics-based and data-driven modeling with hands-on delivery of scalable analytics for asset-heavy industries. Across two decades I've moved between the lab, the prototype, and the plant — leading multidisciplinary teams and advising on data architecture and analytics strategy.</p>
+        <p class="rest">My focus is translating complex methods into decisions people can act on, most often in energy.</p>
+      </section>
+
+      <div class="rule-fade"></div>
+
+      <section class="experience">
+        <span class="kicker">Experience</span>
+        <div class="exp-grid">
+          <div class="card elev-sm exp-card">
+            <div class="card-kicker">Foundation</div>
+            <div class="exp-head">
+              <span class="exp-chip"><i class="ph ph-graduation-cap" aria-hidden="true"></i></span>
+              <div class="card-title">Academic research</div>
+            </div>
+            <p class="card-body">Physics-based modeling and PhD-level rigor at the base of every solution.</p>
+          </div>
+          <div class="card elev-sm exp-card">
+            <div class="card-kicker">Build</div>
+            <div class="exp-head">
+              <span class="exp-chip"><i class="ph ph-flask" aria-hidden="true"></i></span>
+              <div class="card-title">Applied R&amp;D</div>
+            </div>
+            <p class="card-body">Research methods into working prototypes, tools, and scalable analytics.</p>
+          </div>
+          <div class="card elev-sm exp-card span-2">
+            <div class="card-kicker">Deliver</div>
+            <div class="exp-head">
+              <span class="exp-chip"><i class="ph ph-briefcase" aria-hidden="true"></i></span>
+              <div class="card-title">Industrial consultancy</div>
+            </div>
+            <p class="card-body">Data architecture, analytics strategy, and operational value for asset-heavy industries — particularly energy — leading multidisciplinary teams end to end.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="rule-fade"></div>
+
+      <section class="contact">
+        <span class="kicker">Get in touch</span>
+        <h2>Let's talk</h2>
+        <p class="note">Have a project or a question? A note lands straight in my inbox.</p>
+        <form id="contact-form">
+          <div class="row-2">
+            <div class="field">
+              <label for="contact-name">Name</label>
+              <input class="input" id="contact-name" name="contactName" type="text" placeholder="Your name" />
+            </div>
+            <div class="field">
+              <label for="contact-email">Email</label>
+              <input class="input" id="contact-email" name="contactEmail" type="email" placeholder="you@example.com" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="contact-message">Message</label>
+            <textarea class="input" id="contact-message" name="contactMessage" placeholder="What's on your mind?"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Send message <i class="ph ph-arrow-right" aria-hidden="true"></i></button>
+        </form>
+      </section>
+    </main>
+  </div>
 
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
+
+    // No backend: the form builds a mailto: and hands off to the mail client.
+    document.getElementById('contact-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = e.currentTarget;
+      const val = (n) => (f.querySelector('[name="' + n + '"]')?.value || '').trim();
+      const name = val('contactName');
+      const email = val('contactEmail');
+      const message = val('contactMessage');
+      const subject = encodeURIComponent('Website message' + (name ? ' from ' + name : ''));
+      const body = encodeURIComponent(message + '\n\n— ' + name + (email ? ' <' + email + '>' : ''));
+      window.location.href = 'mailto:gzarruk@gmail.com?subject=' + subject + '&body=' + body;
+    });
   </script>
 </body>
 </html>
