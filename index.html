@@ -23,6 +23,10 @@
   .layout {
     display: grid;
     grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    /* 340 sidebar + 860 main — centred so wide screens don't strand the
+       content against the left edge. */
+    max-width: 1200px;
+    margin-inline: auto;
     min-height: 100vh;
   }
 
