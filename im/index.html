@@ -132,7 +132,7 @@
 
     <header class="page-head">
       <h1>Ironman 70.3 Training</h1>
-      <div class="tagline">Live from Google Sheets</div>
+      <div class="tagline">Live from Firestore</div>
     </header>
 
     <section class="card">
@@ -144,39 +144,59 @@
       </div>
 
       <div id="signin-panel" class="signin-panel">
-        <p>This sheet is private, so sign in with the Google account that has access to it.</p>
+        <p>This data is private, so sign in with the Google account that has access to it.</p>
         <button id="signin-btn" class="primary" disabled>Sign in with Google</button>
       </div>
 
       <div id="setup-panel" class="setup-panel hidden">
         <h3>One-time setup needed</h3>
-        <p>This page talks directly to the Google Sheets API from your browser — no server involved. Before it can sign you in, you need to create a Google OAuth client and paste its ID into this file.</p>
+        <p>This page reads directly from Cloud Firestore using the Firebase JS SDK — no server involved. Before it can sign you in, you need a Firebase project with Firestore and Google sign-in enabled.</p>
         <ol>
-          <li>In <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:#fff;">Google Cloud Console</a>, create a project (or reuse one).</li>
-          <li>Enable the <strong>Google Sheets API</strong> for that project (APIs &amp; Services → Library).</li>
-          <li>Go to APIs &amp; Services → OAuth consent screen. Choose <strong>External</strong>, keep it in <strong>Testing</strong> status, and add <code>gzarruk@gmail.com</code> as a test user.</li>
-          <li>Go to APIs &amp; Services → Credentials → Create Credentials → <strong>OAuth client ID</strong> → type <strong>Web application</strong>. Under Authorized JavaScript origins add <code>https://www.gzarruk.com</code> (and <code>http://localhost:PORT</code> if you want to test locally).</li>
-          <li>Copy the generated Client ID and paste it as <code>CONFIG.clientId</code> near the top of the <code>&lt;script&gt;</code> in <code>im/index.html</code>.</li>
+          <li>In <a href="https://console.firebase.google.com/" target="_blank" rel="noopener" style="color:#fff;">Firebase console</a>, create (or reuse) a project.</li>
+          <li>Enable a <strong>Cloud Firestore</strong> database (Native mode, default database, production rules).</li>
+          <li>Under Authentication → Sign-in method, enable the <strong>Google</strong> provider, and add your site's domain under Authorized domains.</li>
+          <li>Lock down Firestore security rules so only your account can read/write the <code>trainingPlan</code> collection.</li>
+          <li>Register a Web app (Project settings → Your apps) and paste its config object as <code>CONFIG.firebase</code> near the top of the <code>&lt;script&gt;</code> in <code>im/index.html</code>.</li>
         </ol>
       </div>
 
       <div id="grid-container"></div>
     </section>
 
-    <footer>Not linked from the main site — edits happen in the sheet, this page just mirrors it.</footer>
+    <footer>Not linked from the main site — edits happen in Firestore, this page just mirrors it.</footer>
   </main>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js';
+    import {
+      getAuth,
+      GoogleAuthProvider,
+      signInWithPopup,
+      signOut,
+      onAuthStateChanged,
+    } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      doc,
+      getDoc,
+    } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
+
     const CONFIG = {
-      // Paste the OAuth Client ID you create in Google Cloud Console (see setup instructions above).
-      clientId: '623680058729-l8epkcn43kl7s3077rtpgnctpt74vv4g.apps.googleusercontent.com',
-      spreadsheetId: '1q6CuiPDr9u_XedMZGdEdUMNG7d2yitvBUI46O92Q-Uw',
+      // From Firebase console → Project settings → Your apps → SDK setup and configuration.
+      firebase: {
+        apiKey: 'AIzaSyDeJrxAeHHIBRTdfYBFBToDV8djv-p1nfo',
+        authDomain: 'local-terminus-467316-m8.firebaseapp.com',
+        projectId: 'local-terminus-467316-m8',
+        storageBucket: 'local-terminus-467316-m8.firebasestorage.app',
+        messagingSenderId: '623680058729',
+        appId: '1:623680058729:web:53a37a15ef2363692139f8',
+      },
       defaultTab: 'Templates',
-      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+      collection: 'trainingPlan',
     };
 
-    const TOKEN_KEY = 'im_gsheet_token';
-    const TOKEN_EXPIRY_KEY = 'im_gsheet_token_expiry';
     const AUTO_REFRESH_MS = 5 * 60 * 1000;
 
     const els = {
@@ -190,17 +210,10 @@
       status: document.getElementById('status'),
     };
 
-    let tokenClient = null;
-    let accessToken = sessionStorage.getItem(TOKEN_KEY) || null;
-    let tokenExpiry = Number(sessionStorage.getItem(TOKEN_EXPIRY_KEY) || 0);
     let autoRefreshTimer = null;
 
     function isConfigured() {
-      return CONFIG.clientId && !CONFIG.clientId.startsWith('YOUR_');
-    }
-
-    function hasValidToken() {
-      return accessToken && Date.now() < tokenExpiry;
+      return CONFIG.firebase.apiKey && !CONFIG.firebase.apiKey.startsWith('YOUR_');
     }
 
     function setStatus(text, isError) {
@@ -214,14 +227,6 @@
       return div.innerHTML;
     }
 
-    function clearToken() {
-      accessToken = null;
-      tokenExpiry = 0;
-      sessionStorage.removeItem(TOKEN_KEY);
-      sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
-      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-    }
-
     function showSignedOut(message) {
       els.signinPanel.classList.remove('hidden');
       els.tabSelect.classList.add('hidden');
@@ -229,40 +234,38 @@
       els.signoutBtn.classList.add('hidden');
       els.gridContainer.innerHTML = '';
       setStatus(message || '', !!message);
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
     }
 
-    async function sheetsFetch(path) {
-      const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.spreadsheetId}${path}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (res.status === 401) {
-        clearToken();
-        showSignedOut('Session expired — sign in again.');
-        throw new Error('unauthorized');
-      }
-      if (!res.ok) {
-        const body = await res.text();
-        throw new Error(`Sheets API ${res.status}: ${body}`);
-      }
-      return res.json();
+    if (!isConfigured()) {
+      els.setupPanel.classList.remove('hidden');
+      els.signinPanel.classList.add('hidden');
+      throw new Error('Firebase not configured — see setup panel.');
     }
+
+    const app = initializeApp(CONFIG.firebase);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
 
     async function loadTabs() {
-      const data = await sheetsFetch('?fields=sheets.properties.title');
-      return (data.sheets || []).map((s) => s.properties.title);
+      const snap = await getDocs(collection(db, CONFIG.collection));
+      return snap.docs.map((d) => d.id);
     }
 
-    // Fetches formatted values AND merge ranges, so cells like the per-day
-    // header and single-activity rows (e.g. "Day OFF") render with the same
-    // colspan/rowspan grouping as the sheet itself, instead of guessing.
+    // Each tab is one document: { values: string[][], bold: boolean[][], merges: [...] }
+    // — the same shape the old Sheets API mirror used, so rendering is unchanged.
+    // values/bold are stored as JSON strings because Firestore rejects arrays
+    // nested inside arrays (see import-to-firestore.js).
     async function loadGrid(tabName) {
-      const fields = 'sheets(data(rowData(values(formattedValue,effectiveFormat(textFormat(bold))))),merges)';
-      const data = await sheetsFetch(`?ranges=${encodeURIComponent(tabName)}&fields=${encodeURIComponent(fields)}`);
-      const sheet = (data.sheets || [])[0] || {};
-      const rowData = sheet.data?.[0]?.rowData || [];
-      const values = rowData.map((row) => (row.values || []).map((cell) => cell.formattedValue ?? ''));
-      const bold = rowData.map((row) => (row.values || []).map((cell) => !!cell.effectiveFormat?.textFormat?.bold));
-      return { values, bold, merges: sheet.merges || [] };
+      const snap = await getDoc(doc(db, CONFIG.collection, tabName));
+      if (!snap.exists()) return { values: [], bold: [], merges: [] };
+      const data = snap.data();
+      return {
+        values: data.values ? JSON.parse(data.values) : [],
+        bold: data.bold ? JSON.parse(data.bold) : [],
+        merges: data.merges || [],
+      };
     }
 
     function renderGrid({ values, bold, merges }) {
@@ -318,9 +321,11 @@
         els.status.classList.remove('err');
         els.status.innerHTML = `<span class="dot"></span>Synced ${new Date().toLocaleTimeString()}`;
       } catch (err) {
-        if (err.message !== 'unauthorized') {
-          console.error(err);
-          setStatus('Could not load the sheet — check console for details.', true);
+        console.error(err);
+        if (err.code === 'permission-denied') {
+          setStatus('Signed in, but this account doesn\'t have access.', true);
+        } else {
+          setStatus('Could not load the data — check console for details.', true);
         }
       }
     }
@@ -338,7 +343,6 @@
           els.tabSelect.value = CONFIG.defaultTab;
         }
       } catch (err) {
-        if (err.message === 'unauthorized') return;
         console.error(err);
       }
 
@@ -348,51 +352,31 @@
       autoRefreshTimer = setInterval(refresh, AUTO_REFRESH_MS);
     }
 
-    window.initGis = function initGis() {
-      if (!isConfigured()) {
-        els.setupPanel.classList.remove('hidden');
-        els.signinPanel.classList.add('hidden');
-        return;
-      }
-
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: CONFIG.clientId,
-        scope: CONFIG.scope,
-        callback: (resp) => {
-          if (resp.error) {
-            setStatus(`Sign-in failed: ${resp.error}`, true);
-            return;
-          }
-          accessToken = resp.access_token;
-          tokenExpiry = Date.now() + (resp.expires_in || 3600) * 1000;
-          sessionStorage.setItem(TOKEN_KEY, accessToken);
-          sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(tokenExpiry));
-          onSignedIn();
-        },
-      });
-
-      els.signinBtn.disabled = false;
-      els.signinBtn.addEventListener('click', () => {
-        tokenClient.requestAccessToken({ prompt: hasValidToken() ? '' : 'consent' });
-      });
-
-      if (hasValidToken()) {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
         onSignedIn();
+      } else {
+        showSignedOut();
       }
-    };
+    });
+
+    els.signinBtn.disabled = false;
+    els.signinBtn.addEventListener('click', async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        console.error(err);
+        setStatus(`Sign-in failed: ${err.code || err.message}`, true);
+      }
+    });
 
     els.refreshBtn.addEventListener('click', refresh);
     els.tabSelect.addEventListener('change', refresh);
-    els.signoutBtn.addEventListener('click', () => {
-      clearToken();
-      showSignedOut('Signed out.');
-    });
+    els.signoutBtn.addEventListener('click', () => signOut(auth));
 
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && hasValidToken()) refresh();
+      if (document.visibilityState === 'visible' && auth.currentUser) refresh();
     });
   </script>
-
-  <script src="https://accounts.google.com/gsi/client" async defer onload="initGis()"></script>
 </body>
 </html>
