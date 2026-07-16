@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-a48fb10f-b2bb-4614-b941-9580377fd03d/styles.css">
+<script src="_ds/nocturne-a48fb10f-b2bb-4614-b941-9580377fd03d/_ds_bundle.js"></script>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  body { margin: 0; min-height: 100vh; background:
+    radial-gradient(1200px 720px at 88% -180px, color-mix(in srgb, var(--color-accent-900) 70%, transparent), transparent 60%),
+    radial-gradient(1000px 820px at -12% 108%, color-mix(in srgb, black 28%, transparent), transparent 55%),
+    var(--color-bg); }
+  a { color: var(--color-accent); }
+  a:hover { color: var(--color-accent-300); }
+  @media (max-width: 680px) {
+    .im-h1 { font-size: 26px !important; }
+    .im-actions { margin-left: 0 !important; }
+    .im-boardwrap { overflow-x: visible !important; }
+    .im-board { grid-template-columns: 1fr !important; min-width: 0 !important; }
+    .im-col { min-height: 0 !important; }
+    .im-chartcard { padding: 16px 12px !important; }
+    .im-chartscroll { overflow-x: auto; overflow-y: hidden; }
+    .im-chartsvg { min-width: 600px !important; }
+  }
+</style>
+</helmet>
+
+<div style="max-width: 1240px; margin: 0 auto; padding: 44px clamp(20px, 5vw, 56px) 72px;">
+
+  <a href="Home.dc.html" style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: color-mix(in srgb, var(--color-text) 60%, transparent); text-decoration: none; margin-bottom: 26px;" style-hover="color: var(--color-text);"><i class="ph ph-arrow-left"></i> gzarruk.com</a>
+
+  <header style="margin-bottom: 26px;">
+    <span style="display: inline-flex; align-items: center; gap: 14px; font-size: 12px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 12px;"><span style="width: 40px; height: 1px; background: var(--color-accent);"></span>Season plan</span>
+    <h1 class="im-h1" style="font-size: 36px; letter-spacing: -0.02em; margin: 0 0 6px; color: var(--color-text);">Ironman 70.3 Training</h1>
+    <p style="font-size: 15px; margin: 0; color: color-mix(in srgb, var(--color-text) 62%, transparent);">{{ weekLabel }} · {{ weekFocus }}</p>
+  </header>
+
+  <div style="margin-bottom: 20px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
+      <span style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; color: color-mix(in srgb, var(--color-text) 50%, transparent);">Plan overview</span>
+      <span style="display: inline-flex; align-items: center; gap: 14px;">
+        <label style="display: inline-flex; align-items: center; gap: 7px; font-size: 12px; white-space: nowrap; color: color-mix(in srgb, var(--color-text) 60%, transparent);">Starts<input type="date" value="{{ startDate }}" onChange="{{ setStart }}" class="input" style="min-height: 30px; padding: 3px 8px; font-size: 12px; width: auto; color-scheme: dark;" /></label>
+        <span style="font-size: 12px; white-space: nowrap; color: color-mix(in srgb, var(--color-text) 68%, transparent);"><span style="color: var(--color-accent-300); font-family: var(--font-heading);">{{ plan.totalWeeks }}</span> weeks</span>
+      </span>
+    </div>
+    <div style="display: flex; gap: 4px;">
+      <sc-for list="{{ plan.phases }}" as="p" hint-placeholder-count="4">
+        <button type="button" data-phase="{{ p.name }}" onClick="{{ selectPhase }}" style="flex: {{ p.weeks }} 1 0; min-width: 0; padding: 9px 12px; border: 0; border-radius: var(--radius-md); cursor: pointer; font-family: var(--font-heading); font-size: 12px; text-align: left; display: flex; flex-direction: column; gap: 2px; {{ p.segStyle }}">
+          <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ p.name }}</span>
+          <span style="font-size: 10px; opacity: 0.7; font-variant-numeric: tabular-nums;">{{ p.weeks }} wk</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="margin-top: 10px; height: 6px; border-radius: 999px; background: color-mix(in srgb, var(--color-text) 12%, transparent); overflow: hidden;"><div style="height: 100%; background: var(--color-accent); border-radius: 999px; {{ season.fillStyle }}"></div></div>
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; font-size: 11px; color: color-mix(in srgb, var(--color-text) 52%, transparent);">
+      <span style="white-space: nowrap;">Season progress</span>
+      <span style="font-variant-numeric: tabular-nums;">Week <span style="color: var(--color-accent-300); font-family: var(--font-heading);">{{ season.abs }}</span> of {{ plan.totalWeeks }} · {{ season.pct }}%</span>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-bottom: 18px;">
+    <div class="seg" role="tablist" aria-label="Training phase">
+      <label class="seg-opt"><input type="radio" name="phase" value="Base" checked="{{ pBase }}" onChange="{{ setPhase }}" />Base</label>
+      <label class="seg-opt"><input type="radio" name="phase" value="Build" checked="{{ pBuild }}" onChange="{{ setPhase }}" />Build</label>
+      <label class="seg-opt"><input type="radio" name="phase" value="Peak" checked="{{ pPeak }}" onChange="{{ setPhase }}" />Peak</label>
+      <label class="seg-opt"><input type="radio" name="phase" value="Taper" checked="{{ pTaper }}" onChange="{{ setPhase }}" />Taper</label>
+    </div>
+
+    <div style="display: inline-flex; align-items: center; gap: 8px;">
+      <button type="button" class="btn btn-secondary btn-icon" onClick="{{ prevWeek }}" aria-label="Previous week"><i class="ph ph-caret-left"></i></button>
+      <span style="display: flex; flex-direction: column; align-items: center; line-height: 1.25; min-width: 140px;"><span style="font-size: 13px; white-space: nowrap; color: color-mix(in srgb, var(--color-text) 78%, transparent);">{{ weekPos }}</span><span style="font-size: 11px; white-space: nowrap; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--color-text) 48%, transparent);">{{ weekRange }}</span></span>
+      <button type="button" class="btn btn-secondary btn-icon" onClick="{{ nextWeek }}" aria-label="Next week"><i class="ph ph-caret-right"></i></button>
+    </div>
+
+    <div class="im-actions" style="display: inline-flex; align-items: center; gap: 8px; margin-left: auto;">
+      <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: color-mix(in srgb, var(--color-text) 58%, transparent);"><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 25%, transparent);"></span>{{ status }}</span>
+      <button type="button" class="btn btn-secondary" onClick="{{ refresh }}"><i class="ph ph-arrow-clockwise"></i> Sync</button>
+      <button type="button" class="btn btn-ghost" onClick="{{ resetOrder }}"><i class="ph ph-arrow-counter-clockwise"></i> Reset week</button>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-wrap: nowrap; align-items: stretch; margin-bottom: 16px; border: 1px solid var(--color-divider); border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-surface) 45%, transparent); overflow-x: auto;">
+    <div style="flex: 1 1 auto; min-width: 120px; padding: 12px 18px; display: flex; flex-direction: column; gap: 3px;">
+      <span style="font-size: 11px; letter-spacing: 0.04em; color: color-mix(in srgb, var(--color-text) 50%, transparent);">Total volume</span>
+      <span style="font-family: var(--font-heading); font-size: 20px; letter-spacing: -0.01em; color: var(--color-accent-300); font-variant-numeric: tabular-nums;">{{ summary.totalTime }}</span>
+    </div>
+    <div style="flex: 1 1 auto; min-width: 108px; padding: 12px 18px; display: flex; flex-direction: column; gap: 3px; border-left: 1px solid var(--color-divider);">
+      <span style="font-size: 11px; letter-spacing: 0.04em; color: color-mix(in srgb, var(--color-text) 50%, transparent);">Sessions</span>
+      <span style="font-family: var(--font-heading); font-size: 20px; letter-spacing: -0.01em; color: var(--color-text); font-variant-numeric: tabular-nums;">{{ summary.sessionCount }}</span>
+    </div>
+    <div style="flex: 1 1 auto; min-width: 108px; padding: 12px 18px; display: flex; flex-direction: column; gap: 3px; border-left: 1px solid var(--color-divider);">
+      <span style="font-size: 11px; letter-spacing: 0.04em; color: color-mix(in srgb, var(--color-text) 50%, transparent); display: inline-flex; align-items: center; gap: 5px;"><i class="ph ph-person-simple-swim" style="color: #5fb1cb;"></i>Swim</span>
+      <span style="font-family: var(--font-heading); font-size: 20px; letter-spacing: -0.01em; color: var(--color-text); font-variant-numeric: tabular-nums;">{{ summary.swim }}</span>
+    </div>
+    <div style="flex: 1 1 auto; min-width: 108px; padding: 12px 18px; display: flex; flex-direction: column; gap: 3px; border-left: 1px solid var(--color-divider);">
+      <span style="font-size: 11px; letter-spacing: 0.04em; color: color-mix(in srgb, var(--color-text) 50%, transparent); display: inline-flex; align-items: center; gap: 5px;"><i class="ph ph-bicycle" style="color: #d8a75f;"></i>Bike</span>
+      <span style="font-family: var(--font-heading); font-size: 20px; letter-spacing: -0.01em; color: var(--color-text); font-variant-numeric: tabular-nums;">{{ summary.bike }}</span>
+    </div>
+    <div style="flex: 1 1 auto; min-width: 108px; padding: 12px 18px; display: flex; flex-direction: column; gap: 3px; border-left: 1px solid var(--color-divider);">
+      <span style="font-size: 11px; letter-spacing: 0.04em; color: color-mix(in srgb, var(--color-text) 50%, transparent); display: inline-flex; align-items: center; gap: 5px;"><i class="ph ph-person-simple-run" style="color: #e08a6c;"></i>Run</span>
+      <span style="font-family: var(--font-heading); font-size: 20px; letter-spacing: -0.01em; color: var(--color-text); font-variant-numeric: tabular-nums;">{{ summary.run }}</span>
+    </div>
+    <div style="flex: 1.4 1 auto; min-width: 148px; padding: 12px 18px; display: flex; flex-direction: column; gap: 5px; border-left: 1px solid var(--color-divider);">
+      <span style="font-size: 11px; letter-spacing: 0.04em; color: color-mix(in srgb, var(--color-text) 50%, transparent);">Completed</span>
+      <span style="font-family: var(--font-heading); font-size: 20px; letter-spacing: -0.01em; color: var(--color-text); font-variant-numeric: tabular-nums;">{{ summary.doneLabel }} <span style="font-size: 13px; color: color-mix(in srgb, var(--color-text) 50%, transparent);">· {{ summary.donePct }}%</span></span>
+      <div style="height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--color-text) 12%, transparent); overflow: hidden; margin-top: 2px;"><div style="height: 100%; background: var(--color-accent); {{ summary.donePctStyle }}"></div></div>
+    </div>
+  </div>
+
+  <div class="im-boardwrap" style="overflow-x: auto; padding-bottom: 4px;">
+    <div class="im-board" style="display: grid; grid-template-columns: repeat(7, minmax(146px, 1fr)); gap: 10px; min-width: 960px;">
+      <sc-for list="{{ columns }}" as="c" hint-placeholder-count="7">
+        <div class="im-col" data-day="{{ c.day }}" onDragOver="{{ dragOverCol }}" onDrop="{{ dropCol }}" style="display: flex; flex-direction: column; gap: 8px; padding: 10px; min-height: 360px; border: 1px solid var(--color-divider); border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-surface) 45%, transparent); transition: border-color 0.12s ease, background 0.12s ease; {{ c.todayStyle }} {{ c.overStyle }}">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 2px 2px 4px;">
+            <span style="display: inline-flex; align-items: baseline; gap: 6px;"><span style="font-family: var(--font-heading); font-size: 13px; color: var(--color-text);">{{ c.day }}</span><span style="font-size: 10px; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--color-text) 38%, transparent);">{{ c.date }}</span><sc-if value="{{ c.isToday }}"><span style="font-size: 9px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-accent); border: 1px solid var(--color-accent); border-radius: 999px; padding: 1px 6px; align-self: center;">Today</span></sc-if></span>
+            <span style="font-size: 11px; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--color-text) 42%, transparent);">{{ c.total }}</span>
+          </div>
+
+          <sc-for list="{{ c.items }}" as="r" hint-placeholder-count="1">
+            <div draggable="true" data-id="{{ r.id }}" onDragStart="{{ dragStart }}" onDragEnd="{{ dragEnd }}" style="display: flex; flex-direction: column; gap: 7px; padding: 10px 10px 10px 11px; border: 1px solid var(--color-divider); border-left: 3px solid {{ r.color }}; border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-sm); cursor: grab;" style-hover="box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 42%, transparent), var(--shadow-sm);">
+              <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 10px; padding: 3px 8px; border-radius: calc(var(--radius-md) * 0.75); background: {{ r.tagBg }}; color: {{ r.tagText }};"><i class="ph {{ r.icon }}"></i>{{ r.disc }}</span>
+                <span style="display: inline-flex; gap: 2px; flex: none;">
+                  <button type="button" draggable="false" data-id="{{ r.id }}" onClick="{{ openEdit }}" title="Edit session" style="width: 22px; height: 22px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm); background: transparent; color: color-mix(in srgb, var(--color-text) 42%, transparent); cursor: pointer;" style-hover="color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent);"><i class="ph ph-pencil-simple" style="font-size: 13px;"></i></button>
+                  <button type="button" draggable="false" data-id="{{ r.id }}" onClick="{{ removeSession }}" title="Delete session" style="width: 22px; height: 22px; display: grid; place-items: center; border: 0; border-radius: var(--radius-sm); background: transparent; color: color-mix(in srgb, var(--color-text) 36%, transparent); cursor: pointer;" style-hover="color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 12%, transparent);"><i class="ph ph-trash" style="font-size: 13px;"></i></button>
+                </span>
+              </div>
+              <div style="font-size: 12.5px; line-height: 1.38; color: {{ r.focusColor }};">{{ r.displayFocus }}</div>
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 11px; color: color-mix(in srgb, var(--color-text) 55%, transparent);">
+                <span style="display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums;"><i class="ph ph-clock"></i>{{ r.dur }}</span>
+                <sc-if value="{{ showZone }}"><span style="display: inline-flex; align-items: center; gap: 4px;"><i class="ph ph-gauge"></i>{{ r.zone }}</span></sc-if>
+              </div>
+              <sc-if value="{{ r.hasDesc }}"><div style="font-size: 11px; line-height: 1.45; color: color-mix(in srgb, var(--color-text) 50%, transparent);">{{ r.desc }}</div></sc-if>
+              <div style="border-top: 1px solid var(--color-divider); padding-top: 6px; margin-top: 1px;">
+                <sc-if value="{{ r.done }}"><span role="button" tabindex="0" data-id="{{ r.id }}" onClick="{{ toggleDone }}" style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 11px; color: var(--color-accent-300);"><i class="ph ph-check-circle" style="font-size: 15px;"></i>Done</span></sc-if>
+                <sc-if value="{{ r.notDone }}"><span role="button" tabindex="0" data-id="{{ r.id }}" onClick="{{ toggleDone }}" style="display: inline-flex; align-items: center; gap: 5px; cursor: pointer; font-size: 11px; color: color-mix(in srgb, var(--color-text) 48%, transparent);" style-hover="color: var(--color-text);"><i class="ph ph-circle" style="font-size: 15px;"></i>Mark done</span></sc-if>
+              </div>
+            </div>
+          </sc-for>
+
+          <sc-if value="{{ c.empty }}">
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; border: 1px dashed color-mix(in srgb, var(--color-text) 14%, transparent); border-radius: var(--radius-sm); font-size: 11px; color: color-mix(in srgb, var(--color-text) 34%, transparent); padding: 12px; min-height: 84px;">Rest day — drag or add a session</div>
+          </sc-if>
+          <button type="button" data-day="{{ c.day }}" onClick="{{ addSession }}" style="display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border: 1px dashed color-mix(in srgb, var(--color-text) 18%, transparent); border-radius: var(--radius-md); background: transparent; color: color-mix(in srgb, var(--color-text) 55%, transparent); font-size: 12px; font-family: var(--font-heading); cursor: pointer;" style-hover="border-color: var(--color-accent); color: var(--color-accent);"><i class="ph ph-plus"></i>Add session</button>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div class="im-chartcard" style="margin-top: 22px; border: 1px solid var(--color-divider); border-radius: var(--radius-md); background: color-mix(in srgb, var(--color-surface) 45%, transparent); padding: 18px 20px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px;">
+      <span style="font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--color-text) 50%, transparent);">Season training load</span>
+      <span style="display: inline-flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <span style="font-size: 12px; color: color-mix(in srgb, var(--color-text) 62%, transparent);">Completed <span style="color: var(--color-accent-300); font-family: var(--font-heading);">{{ chart.completed }}</span> / {{ chart.planned }} · {{ chart.compPct }}%</span>
+        <span class="seg" role="group" aria-label="Chart mode">
+          <label class="seg-opt"><input type="radio" name="chartmode" data-mode="weekly" checked="{{ cmWeekly }}" onChange="{{ setChartMode }}" />Weekly</label>
+          <label class="seg-opt"><input type="radio" name="chartmode" data-mode="cumulative" checked="{{ cmCumulative }}" onChange="{{ setChartMode }}" />Cumulative</label>
+        </span>
+      </span>
+    </div>
+    <div class="im-chartscroll" style="position: relative;">
+    <svg class="im-chartsvg" viewBox="0 0 900 220" onMouseMove="{{ onChartMove }}" onMouseLeave="{{ onChartLeave }}" style="width: 100%; height: auto; display: block;">
+      <sc-for list="{{ chart.yTicks }}" as="y" hint-placeholder-count="5">
+        <line x1="54" x2="886" y1="{{ y.y }}" y2="{{ y.y }}" style="stroke: color-mix(in srgb, var(--color-text) 8%, transparent);" stroke-width="1" />
+        <line x1="49" x2="54" y1="{{ y.y }}" y2="{{ y.y }}" style="stroke: color-mix(in srgb, var(--color-text) 48%, transparent);" stroke-width="1" />
+      </sc-for>
+      {{ chart.yLabelNodes }}
+      <line x1="54" x2="54" y1="12" y2="{{ chart.baseY }}" style="stroke: color-mix(in srgb, var(--color-text) 22%, transparent);" stroke-width="1" />
+      <line x1="54" x2="886" y1="{{ chart.baseY }}" y2="{{ chart.baseY }}" style="stroke: color-mix(in srgb, var(--color-text) 22%, transparent);" stroke-width="1" />
+      <text x="15" y="103" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 15 103)" font-size="11" style="fill: color-mix(in srgb, var(--color-text) 55%, transparent);">Time (hours)</text>
+      <sc-for list="{{ chart.boundaries }}" as="b" hint-placeholder-count="3">
+        <line x1="{{ b.x }}" x2="{{ b.x }}" y1="12" y2="{{ chart.baseY }}" style="stroke: color-mix(in srgb, var(--color-text) 9%, transparent);" stroke-width="1" />
+      </sc-for>
+      <line x1="{{ chart.curX }}" x2="{{ chart.curX }}" y1="12" y2="{{ chart.baseY }}" style="stroke: var(--color-accent);" stroke-width="1" stroke-dasharray="3 3" opacity="0.55" />
+      <sc-for list="{{ chart.ticks }}" as="t" hint-placeholder-count="8">
+        <line x1="{{ t.x }}" x2="{{ t.x }}" y1="{{ chart.baseY }}" y2="{{ chart.tickBot }}" style="stroke: color-mix(in srgb, var(--color-text) 45%, transparent);" stroke-width="1" />
+      </sc-for>
+      {{ chart.xLabelNodes }}
+      <text x="470" y="217" text-anchor="middle" font-size="11" style="fill: color-mix(in srgb, var(--color-text) 55%, transparent);">Week</text>
+      <sc-for list="{{ chart.series }}" as="s" hint-placeholder-count="5">
+        <sc-if value="{{ s.show }}"><polyline points="{{ s.pts }}" fill="none" style="stroke: {{ s.color }};" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.9" /></sc-if>
+      </sc-for>
+      <sc-if value="{{ chart.totalShow }}"><polyline points="{{ chart.totalPts }}" fill="none" style="stroke: var(--color-accent);" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round" /></sc-if>
+      <sc-if value="{{ hoverShow }}">
+        <line x1="{{ hoverLineX }}" x2="{{ hoverLineX }}" y1="12" y2="{{ chart.baseY }}" style="stroke: color-mix(in srgb, var(--color-text) 45%, transparent);" stroke-width="1" />
+        <sc-for list="{{ hoverDots }}" as="dt" hint-placeholder-count="4">
+          <circle cx="{{ dt.cx }}" cy="{{ dt.cy }}" r="3.2" style="fill: {{ dt.color }}; stroke: var(--color-bg);" stroke-width="1.5" />
+        </sc-for>
+      </sc-if>
+    </svg>
+      <sc-if value="{{ hoverShow }}">
+        <div style="position: absolute; top: 4px; left: {{ hoverLeft }}; transform: translateX({{ hoverTx }}); pointer-events: none; background: var(--color-bg); border: 1px solid var(--color-divider); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 8px 10px; min-width: 130px; z-index: 5;">
+          <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px;"><span style="font-family: var(--font-heading); font-size: 12px; color: var(--color-text);">{{ hoverLabel }}</span><span style="font-size: 10px; color: color-mix(in srgb, var(--color-text) 50%, transparent);">{{ hoverPhase }}</span></div>
+          <div style="font-size: 10px; color: color-mix(in srgb, var(--color-text) 50%, transparent); margin-bottom: 6px; font-variant-numeric: tabular-nums;">{{ hoverDate }}</div>
+          <sc-for list="{{ hoverRows }}" as="row" hint-placeholder-count="4">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; line-height: 1.7;"><span style="display: inline-flex; align-items: center; gap: 6px; color: color-mix(in srgb, var(--color-text) 72%, transparent);"><span style="width: 9px; height: 9px; border-radius: 2px; background: {{ row.color }};"></span>{{ row.name }}</span><span style="font-variant-numeric: tabular-nums; color: var(--color-text);">{{ row.val }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
+      <button type="button" data-series="Total" onClick="{{ toggleSeries }}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 4px 9px; border: 1px solid var(--color-divider); border-radius: 999px; background: transparent; cursor: pointer; color: color-mix(in srgb, var(--color-text) 72%, transparent); opacity: {{ chart.totalDim }};" style-hover="border-color: var(--color-accent);"><span style="width: 14px; height: 3px; border-radius: 2px; background: var(--color-accent);"></span>Total <span style="opacity: 0.6;">{{ chart.planned }}</span></button>
+      <sc-for list="{{ chart.series }}" as="s" hint-placeholder-count="5">
+        <button type="button" data-series="{{ s.name }}" onClick="{{ toggleSeries }}" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 4px 9px; border: 1px solid var(--color-divider); border-radius: 999px; background: transparent; cursor: pointer; color: color-mix(in srgb, var(--color-text) 72%, transparent); opacity: {{ s.dim }};" style-hover="border-color: var(--color-accent);"><span style="width: 14px; height: 3px; border-radius: 2px; background: {{ s.color }};"></span>{{ s.name }} <span style="opacity: 0.6;">{{ s.totalMin }}</span></button>
+      </sc-for>
+    </div>
+  </div>
+
+  <p style="font-size: 12px; line-height: 1.6; margin: 20px 0 0; color: color-mix(in srgb, var(--color-text) 45%, transparent);">Drag a session card between days to reschedule it, or click the pencil to edit its details. Your edits are saved in this browser. Sample plan shown — the board reads from a JSON model, ready to swap for a live database or API fetch.</p>
+
+  <sc-if value="{{ editingOpen }}">
+    <div onClick="{{ cancelEdit }}" style="position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px; background: color-mix(in srgb, var(--color-neutral-900) 58%, transparent);">
+      <div onClick="{{ stopClose }}" style="width: min(460px, 100%); display: flex; flex-direction: column; gap: 13px; padding: 22px; border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-lg);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <h3 style="font-size: 19px; margin: 0; color: var(--color-text);">Edit session</h3>
+          <button type="button" class="btn btn-icon btn-ghost" onClick="{{ cancelEdit }}" aria-label="Close"><i class="ph ph-x"></i></button>
+        </div>
+        <div class="field"><label>Discipline</label>
+          <select class="input" value="{{ edDisc }}" onChange="{{ setEdDisc }}">
+            <option value="Swim">Swim</option>
+            <option value="Bike">Bike</option>
+            <option value="Run">Run</option>
+            <option value="Strength">Strength</option>
+            <option value="Yoga">Yoga</option>
+            <option value="Brick">Brick</option>
+            <option value="Rest">Rest</option>
+          </select>
+        </div>
+        <div class="field"><label>Title</label><input type="text" class="input" value="{{ edFocus }}" onChange="{{ setEdFocus }}" placeholder="e.g. Endurance spin" /></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="field"><label>Duration</label><input type="text" class="input" value="{{ edDur }}" onChange="{{ setEdDur }}" placeholder="1:00 or 45" /></div>
+          <div class="field"><label>Intensity</label><input type="text" class="input" value="{{ edZone }}" onChange="{{ setEdZone }}" placeholder="Z2" /></div>
+        </div>
+        <div class="field"><label>Description</label><textarea class="input" value="{{ edDesc }}" onChange="{{ setEdDesc }}" placeholder="Sets, cues, notes…"></textarea></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 2px;">
+          <button type="button" class="btn btn-ghost" onClick="{{ deleteEditing }}" style="color: color-mix(in srgb, var(--color-text) 55%, transparent);" style-hover="color: var(--color-accent);"><i class="ph ph-trash"></i> Delete</button>
+          <span style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-secondary" onClick="{{ cancelEdit }}">Cancel</button>
+            <button type="button" class="btn btn-primary" onClick="{{ saveEdit }}">Save changes</button>
+          </span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;startPhase&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;Base&quot;, &quot;Build&quot;, &quot;Peak&quot;, &quot;Taper&quot;], &quot;default&quot;: &quot;Base&quot;, &quot;tsType&quot;: &quot;'Base' | 'Build' | 'Peak' | 'Taper'&quot;, &quot;section&quot;: &quot;Plan&quot;},
+  &quot;showZone&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Cards&quot;},
+  &quot;autoSync&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Cards&quot;}
+}">
+class Component extends DCLogic {
+  planData = {
+    Base: { duration: 6, weeks: [
+      { label: 'Base · Week 1', focus: 'Aerobic base', days: [
+        { d: 'Mon', disc: 'Rest', focus: 'Recovery & mobility', dur: '—', zone: '—' },
+        { d: 'Mon', disc: 'Yoga', focus: 'Yoga & stretching', dur: '0:30', zone: '—' },
+        { d: 'Tue', disc: 'Swim', focus: 'Technique drills', dur: '0:45', zone: 'Z2' },
+        { d: 'Wed', disc: 'Bike', focus: 'Endurance spin', dur: '1:15', zone: 'Z2' },
+        { d: 'Thu', disc: 'Run', focus: 'Easy aerobic', dur: '0:40', zone: 'Z2' },
+        { d: 'Fri', disc: 'Swim', focus: 'Endurance sets', dur: '1:00', zone: 'Z2–Z3' },
+        { d: 'Sat', disc: 'Bike', focus: 'Long ride', dur: '2:00', zone: 'Z2' },
+        { d: 'Sun', disc: 'Run', focus: 'Long run', dur: '1:10', zone: 'Z2' },
+      ]},
+      { label: 'Base · Week 2', focus: 'Volume build', days: [
+        { d: 'Mon', disc: 'Rest', focus: 'Recovery & mobility', dur: '—', zone: '—' },
+        { d: 'Mon', disc: 'Yoga', focus: 'Yoga & stretching', dur: '0:30', zone: '—' },
+        { d: 'Tue', disc: 'Swim', focus: 'Threshold sets', dur: '0:50', zone: 'Z3' },
+        { d: 'Wed', disc: 'Bike', focus: 'Tempo intervals', dur: '1:20', zone: 'Z3' },
+        { d: 'Thu', disc: 'Run', focus: 'Aerobic + strides', dur: '0:45', zone: 'Z2–Z4' },
+        { d: 'Fri', disc: 'Strength', focus: 'Core & stability', dur: '0:40', zone: '—' },
+        { d: 'Sat', disc: 'Bike', focus: 'Long ride', dur: '2:30', zone: 'Z2' },
+        { d: 'Sun', disc: 'Brick', focus: 'Ride + transition run', dur: '1:45', zone: 'Z2–Z3' },
+      ]},
+    ]},
+    Build: { duration: 5, weeks: [
+      { label: 'Build · Week 1', focus: 'Threshold', days: [
+        { d: 'Mon', disc: 'Rest', focus: 'Recovery & mobility', dur: '—', zone: '—' },
+        { d: 'Mon', disc: 'Yoga', focus: 'Yoga & stretching', dur: '0:30', zone: '—' },
+        { d: 'Tue', disc: 'Swim', focus: 'VO2 sets', dur: '0:55', zone: 'Z4' },
+        { d: 'Wed', disc: 'Bike', focus: 'Threshold 2×20', dur: '1:30', zone: 'Z4' },
+        { d: 'Thu', disc: 'Run', focus: 'Tempo', dur: '0:55', zone: 'Z3–Z4' },
+        { d: 'Fri', disc: 'Swim', focus: 'Endurance', dur: '1:05', zone: 'Z2' },
+        { d: 'Sat', disc: 'Bike', focus: 'Long ride + efforts', dur: '3:00', zone: 'Z2–Z3' },
+        { d: 'Sun', disc: 'Run', focus: 'Long run', dur: '1:30', zone: 'Z2' },
+      ]},
+      { label: 'Build · Week 2', focus: 'Race specificity', days: [
+        { d: 'Mon', disc: 'Rest', focus: 'Recovery & mobility', dur: '—', zone: '—' },
+        { d: 'Mon', disc: 'Yoga', focus: 'Yoga & stretching', dur: '0:30', zone: '—' },
+        { d: 'Tue', disc: 'Swim', focus: 'Race-pace sets', dur: '1:00', zone: 'Z3–Z4' },
+        { d: 'Wed', disc: 'Bike', focus: 'Over-unders', dur: '1:40', zone: 'Z3–Z4' },
+        { d: 'Thu', disc: 'Run', focus: 'Hill repeats', dur: '1:00', zone: 'Z4' },
+        { d: 'Fri', disc: 'Strength', focus: 'Power & durability', dur: '0:40', zone: '—' },
+        { d: 'Sat', disc: 'Brick', focus: 'Long ride + run', dur: '3:30', zone: 'Z2–Z3' },
+        { d: 'Sun', disc: 'Run', focus: 'Long run', dur: '1:40', zone: 'Z2' },
+      ]},
+    ]},
+    Peak: { duration: 3, weeks: [
+      { label: 'Peak · Week 1', focus: 'Race simulation', days: [
+        { d: 'Mon', disc: 'Rest', focus: 'Recovery & mobility', dur: '—', zone: '—' },
+        { d: 'Mon', disc: 'Yoga', focus: 'Yoga & stretching', dur: '0:30', zone: '—' },
+        { d: 'Tue', disc: 'Swim', focus: 'Race simulation', dur: '1:10', zone: 'Z3' },
+        { d: 'Wed', disc: 'Bike', focus: 'Race-pace hold', dur: '2:00', zone: 'Z3' },
+        { d: 'Thu', disc: 'Run', focus: 'Tempo', dur: '1:05', zone: 'Z3–Z4' },
+        { d: 'Fri', disc: 'Swim', focus: 'Sharpen', dur: '0:50', zone: 'Z2' },
+        { d: 'Sat', disc: 'Brick', focus: '70.3 simulation', dur: '4:00', zone: 'Z2–Z3' },
+        { d: 'Sun', disc: 'Run', focus: 'Long steady', dur: '1:45', zone: 'Z2' },
+      ]},
+    ]},
+    Taper: { duration: 2, weeks: [
+      { label: 'Taper · Race week', focus: 'Freshen & sharpen', days: [
+        { d: 'Mon', disc: 'Rest', focus: 'Recovery & mobility', dur: '—', zone: '—' },
+        { d: 'Mon', disc: 'Yoga', focus: 'Yoga & stretching', dur: '0:30', zone: '—' },
+        { d: 'Tue', disc: 'Swim', focus: 'Sharpen', dur: '0:35', zone: 'Z2–Z3' },
+        { d: 'Wed', disc: 'Bike', focus: 'Openers', dur: '0:50', zone: 'Z2–Z4' },
+        { d: 'Thu', disc: 'Run', focus: 'Easy + strides', dur: '0:30', zone: 'Z2' },
+        { d: 'Fri', disc: 'Rest', focus: 'Travel & prep', dur: '—', zone: '—' },
+        { d: 'Sat', disc: 'Bike', focus: 'Short openers', dur: '0:30', zone: 'Z2–Z3' },
+        { d: 'Sun', disc: 'Run', focus: 'Race-day shakeout', dur: '0:20', zone: 'Z1–Z2' },
+      ]},
+    ]},
+  };
+
+  disc = {
+    Swim: { icon: 'ph-person-simple-swim', color: '#5fb1cb' },
+    Bike: { icon: 'ph-bicycle', color: '#d8a75f' },
+    Run: { icon: 'ph-person-simple-run', color: '#e08a6c' },
+    Strength: { icon: 'ph-barbell', color: '#9aa0ba' },
+    Yoga: { icon: 'ph-flower-lotus', color: '#84c08f' },
+    Brick: { icon: 'ph-link-simple', color: '#b884d6' },
+    Rest: { icon: 'ph-bed', color: '#7b8299' },
+  };
+
+  DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  STORE = 'im703_v1';
+
+  _load(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  _save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  _weekKey(p, w) { return this.STORE + '_week_' + p + '_' + w; }
+  _doneKey() { return this.STORE + '_done'; }
+  _viewKey() { return this.STORE + '_view'; }
+  _phaseWeeks(p) { return this.planData[p].duration || this.planData[p].weeks.length; }
+  _template(p, w) { const ws = this.planData[p].weeks; return ws[w % ws.length]; }
+  _clampWeek(p, w) { return Math.max(0, Math.min(Number(w) || 0, this._phaseWeeks(p) - 1)); }
+  _fresh(p, w) { return this._template(p, w).days.map((s, i) => ({ ...s, day: s.d, id: p + '-' + w + '-' + i })); }
+  _sessionsFor(p, w) { const saved = this._load(this._weekKey(p, w)); return Array.isArray(saved) && saved.length ? saved : this._fresh(p, w); }
+  _parseISO(s) { const p = String(s || '').split('-').map(Number); return new Date(p[0], (p[1] || 1) - 1, p[2] || 1); }
+  _toISO(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  _addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  _fmtDate(d) { return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+  _defaultStart() { const d = new Date(); const since = (d.getDay() + 6) % 7; return this._toISO(this._addDays(d, -since)); }
+
+  _view = this._load('im703_v1_view') || {};
+  initPhase = (this._view.phase && this.planData[this._view.phase]) ? this._view.phase : ((this.props && this.props.startPhase) || 'Base');
+  initWeek = this._clampWeek(this.initPhase, this._view.week);
+  state = {
+    phase: this.initPhase,
+    week: this.initWeek,
+    done: this._load('im703_v1_done') || {},
+    dragId: null,
+    dragOverDay: null,
+    editingId: null,
+    draft: null,
+    chartMode: this._load('im703_v1_chartmode') || 'weekly',
+    chartHidden: this._load('im703_v1_charthidden') || {},
+    hoverIdx: null,
+    status: 'Loading…',
+    start: this._load('im703_v1_start') || this._defaultStart(),
+    sessions: this._sessionsFor(this.initPhase, this.initWeek),
+  };
+
+  componentDidMount() {
+    this.sync();
+    if (this.props.autoSync) this.timer = setInterval(() => this.sync(), 60000);
+  }
+  componentWillUnmount() { if (this.timer) clearInterval(this.timer); }
+
+  sync() {
+    this.setState({ status: 'Synced ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+  }
+
+  select(phase, wi) {
+    const sessions = this._sessionsFor(phase, wi);
+    this._save(this._viewKey(), { phase, week: wi });
+    this.setState({ phase, week: wi, sessions, dragId: null, dragOverDay: null });
+  }
+
+  _persistSessions(sessions) {
+    this._save(this._weekKey(this.state.phase, this.state.week), sessions);
+    this.setState({ sessions });
+  }
+
+  durToMin(x) {
+    if (!x || x === '—') return 0;
+    const t = String(x).trim();
+    if (t.includes(':')) { const p = t.split(':'); return (Number(p[0]) || 0) * 60 + (Number(p[1]) || 0); }
+    return Number(t) || 0;
+  }
+  fmtTotal(mins) {
+    if (!mins) return '';
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return h ? (h + 'h' + (m ? ' ' + m + 'm' : '')) : (m + 'm');
+  }
+
+  renderVals() {
+    const { phase, week, sessions, done, dragOverDay, draft } = this.state;
+    const tmpl = this._template(phase, week);
+    const nWeeks = this._phaseWeeks(phase);
+    const phaseOrder = ['Base', 'Build', 'Peak', 'Taper'];
+    const plan = {
+      totalWeeks: phaseOrder.reduce((a, p) => a + this._phaseWeeks(p), 0),
+      phases: phaseOrder.map((p) => ({
+        name: p,
+        weeks: this._phaseWeeks(p),
+        segStyle: p === phase
+          ? 'background: color-mix(in srgb, var(--color-accent) 26%, transparent); color: var(--color-accent-100); box-shadow: inset 0 0 0 1px var(--color-accent);'
+          : 'background: color-mix(in srgb, var(--color-surface) 55%, transparent); color: color-mix(in srgb, var(--color-text) 58%, transparent);',
+      })),
+    };
+    const _idx = phaseOrder.indexOf(phase);
+    const _before = phaseOrder.slice(0, _idx).reduce((a, p) => a + this._phaseWeeks(p), 0);
+    const _abs = _before + week + 1;
+    const _pct = Math.round((_abs / plan.totalWeeks) * 100);
+    const season = { abs: _abs, pct: _pct, fillStyle: 'width: ' + _pct + '%;' };
+    const startDate = this._parseISO(this.state.start);
+    const weekStart0 = _before + week;
+    const wkMon = this._addDays(startDate, weekStart0 * 7);
+    const weekRange = this._fmtDate(wkMon) + ' – ' + this._fmtDate(this._addDays(wkMon, 6));
+    const todayISO = this._toISO(new Date());
+
+    const columns = this.DAYS.map((day) => {
+      const _d = this._addDays(startDate, weekStart0 * 7 + this.DAYS.indexOf(day));
+      const _isToday = this._toISO(_d) === todayISO;
+      const dayItems = sessions.filter((s) => s.day === day);
+      const items = dayItems.map((s) => {
+        const meta = this.disc[s.disc] || {};
+        const color = meta.color || 'var(--color-neutral-500)';
+        return {
+          id: s.id, disc: s.disc, focus: s.focus, dur: s.dur, zone: s.zone,
+          desc: s.desc || '', hasDesc: !!(s.desc && s.desc.trim()),
+          displayFocus: (s.focus && s.focus.trim()) ? s.focus : 'Untitled session',
+          focusColor: (s.focus && s.focus.trim()) ? 'color-mix(in srgb, var(--color-text) 84%, transparent)' : 'color-mix(in srgb, var(--color-text) 38%, transparent)',
+          icon: meta.icon || 'ph-circle', color,
+          tagBg: 'color-mix(in srgb, ' + color + ' 20%, transparent)',
+          tagText: 'color-mix(in srgb, ' + color + ' 82%, white)',
+          done: !!done[s.id], notDone: !done[s.id],
+        };
+      });
+      const mins = dayItems.reduce((a, s) => a + this.durToMin(s.dur), 0);
+      return {
+        day, items,
+        empty: dayItems.length === 0,
+        date: this._fmtDate(_d),
+        isToday: _isToday,
+        todayStyle: _isToday ? 'border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent);' : '',
+        total: this.fmtTotal(mins),
+        overStyle: dragOverDay === day ? 'border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 9%, transparent);' : '',
+      };
+    });
+
+    const durOf = (s) => this.durToMin(s.dur);
+    const workouts = sessions.filter((s) => durOf(s) > 0);
+    const totalMin = sessions.reduce((a, s) => a + durOf(s), 0);
+    const discMin = (name) => sessions.filter((s) => s.disc === name).reduce((a, s) => a + durOf(s), 0);
+    const doneWork = workouts.filter((s) => done[s.id]).length;
+    const pct = workouts.length ? Math.round((doneWork / workouts.length) * 100) : 0;
+    const summary = {
+      totalTime: this.fmtTotal(totalMin) || '0m',
+      sessionCount: workouts.length,
+      swim: this.fmtTotal(discMin('Swim')) || '—',
+      bike: this.fmtTotal(discMin('Bike') + Math.round(discMin('Brick') / 2)) || '—',
+      run: this.fmtTotal(discMin('Run') + Math.round(discMin('Brick') / 2)) || '—',
+      doneLabel: doneWork + ' / ' + workouts.length,
+      donePct: pct,
+      donePctStyle: 'width: ' + pct + '%;',
+    };
+
+    const sportList = [
+      { name: 'Swim', color: this.disc.Swim.color },
+      { name: 'Bike', color: this.disc.Bike.color },
+      { name: 'Run', color: this.disc.Run.color },
+      { name: 'Strength', color: this.disc.Strength.color },
+      { name: 'Yoga', color: this.disc.Yoga.color },
+      { name: 'Brick', color: this.disc.Brick.color },
+    ];
+    const phaseAt = (ai) => { let acc = 0; for (const p of phaseOrder) { const n = this._phaseWeeks(p); if (ai < acc + n) return [p, ai - acc]; acc += n; } return [phaseOrder[phaseOrder.length - 1], 0]; };
+    const N = plan.totalWeeks;
+    const wmins = []; let compMin = 0, planMin = 0;
+    for (let ai = 0; ai < N; ai++) {
+      const pa = phaseAt(ai);
+      const days = this._sessionsFor(pa[0], pa[1]);
+      const by = {}; let tot = 0;
+      for (const s of days) { const m = this.durToMin(s.dur); tot += m; by[s.disc] = (by[s.disc] || 0) + m; planMin += m; if (done[s.id]) compMin += m; }
+      wmins.push({ tot, by });
+    }
+    const cumulative = this.state.chartMode === 'cumulative';
+    const hidden = this.state.chartHidden || {};
+    const roll = (getW) => { if (!cumulative) return wmins.map((_, i) => getW(i)); let a = 0; return wmins.map((_, i) => { a += getW(i); return a; }); };
+    const totalVals = roll((i) => wmins[i].tot);
+    const sportSeason = {}, sportVals = {};
+    sportList.forEach((sp) => { sportSeason[sp.name] = wmins.reduce((a, x) => a + (x.by[sp.name] || 0), 0); sportVals[sp.name] = roll((i) => wmins[i].by[sp.name] || 0); });
+    let vis = [];
+    if (!hidden.Total) vis = vis.concat(totalVals);
+    sportList.forEach((sp) => { if (sportSeason[sp.name] > 0 && !hidden[sp.name]) vis = vis.concat(sportVals[sp.name]); });
+    const rawMax = Math.max(60, ...vis);
+    const stepsMin = [15, 30, 60, 120, 180, 300, 600, 900, 1800, 3600];
+    const yStep = stepsMin.find((s) => rawMax / s <= 5) || 3600;
+    const maxY = Math.max(yStep, Math.ceil(rawMax / yStep) * yStep);
+    const CpL = 54, CpR = 14, CpT = 12, CpB = 34, CplotW = 900 - CpL - CpR, CplotH = 220 - CpT - CpB;
+    const xAt = (i) => CpL + (N > 1 ? (i * CplotW) / (N - 1) : CplotW / 2);
+    const yAt = (v) => CpT + CplotH * (1 - v / maxY);
+    const hourLabel = (v) => (v === 0 ? '0' : (v % 60 === 0 ? (v / 60) + 'h' : (v / 60).toFixed(1) + 'h'));
+    const yTicks = []; for (let v = 0; v <= maxY + 0.5; v += yStep) yTicks.push({ y: yAt(v).toFixed(1), label: hourLabel(v) });
+    const ptsArr = (arr) => arr.map((v, i) => xAt(i).toFixed(1) + ',' + yAt(v).toFixed(1)).join(' ');
+    const chartSeries = sportList.filter((sp) => sportSeason[sp.name] > 0).map((sp) => ({ name: sp.name, color: sp.color, pts: ptsArr(sportVals[sp.name]), totalMin: this.fmtTotal(sportSeason[sp.name]), show: !hidden[sp.name], dim: hidden[sp.name] ? '0.4' : '1' }));
+    const boundaries = []; { let acc = 0; for (const p of phaseOrder) { if (acc > 0 && acc < N) boundaries.push({ x: xAt(acc).toFixed(1) }); acc += this._phaseWeeks(p); } }
+    const chart = {
+      mode: this.state.chartMode,
+      totalPts: ptsArr(totalVals),
+      totalShow: !hidden.Total,
+      totalDim: hidden.Total ? '0.4' : '1',
+      series: chartSeries,
+      ticks: wmins.map((_, i) => ({ x: xAt(i).toFixed(1), label: String(i + 1) })),
+      boundaries,
+      curX: xAt(_before + week).toFixed(1),
+      baseY: yAt(0).toFixed(1), tickBot: (yAt(0) + 4).toFixed(1),
+      yTicks,
+      yLabelNodes: yTicks.map((tk, i) => React.createElement('text', { key: 'yl' + i, x: 45, y: tk.y, textAnchor: 'end', dominantBaseline: 'middle', fontSize: 11, fill: '#b2b6ca' }, tk.label)),
+      xLabelNodes: wmins.map((_, i) => React.createElement('text', { key: 'xl' + i, x: xAt(i).toFixed(1), y: 203, textAnchor: 'middle', fontSize: 10.5, fill: '#b2b6ca' }, String(i + 1))),
+      completed: this.fmtTotal(compMin) || '0m', planned: this.fmtTotal(planMin) || '0m',
+      compPct: planMin ? Math.round((compMin / planMin) * 100) : 0,
+    };
+    this._geo = { CpL, plotW: CplotW, N };
+    const hi = this.state.hoverIdx;
+    let hoverShow = false, hoverLineX = '0', hoverDots = [], hoverRows = [], hoverLeft = '0%', hoverTx = '-50%', hoverLabel = '', hoverPhase = '', hoverDate = '';
+    if (hi != null && hi >= 0 && hi < N) {
+      hoverShow = true;
+      hoverLineX = xAt(hi).toFixed(1);
+      hoverPhase = phaseAt(hi)[0];
+      hoverLabel = 'Week ' + (hi + 1);
+      const hMon = this._addDays(startDate, hi * 7);
+      hoverDate = this._fmtDate(hMon) + ' – ' + this._fmtDate(this._addDays(hMon, 6));
+      hoverLeft = ((xAt(hi) / 900) * 100).toFixed(2) + '%';
+      hoverTx = hi <= 1 ? '0' : (hi >= N - 2 ? '-100%' : '-50%');
+      if (!hidden.Total) { hoverRows.push({ name: 'Total', color: 'var(--color-accent)', val: this.fmtTotal(totalVals[hi]) || '0' }); hoverDots.push({ cx: hoverLineX, cy: yAt(totalVals[hi]).toFixed(1), color: 'var(--color-accent)' }); }
+      chartSeries.filter((s) => s.show).forEach((s) => { const v = sportVals[s.name][hi]; hoverRows.push({ name: s.name, color: s.color, val: this.fmtTotal(v) || '0' }); hoverDots.push({ cx: hoverLineX, cy: yAt(v).toFixed(1), color: s.color }); });
+    }
+    const d = draft || {};
+    return {
+      chart,
+      hoverShow, hoverLineX, hoverDots, hoverRows, hoverLeft, hoverTx, hoverLabel, hoverPhase, hoverDate,
+      onChartMove: (e) => {
+        const g = this._geo; if (!g) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        const vbX = ((e.clientX - r.left) / r.width) * 900;
+        let idx = Math.round((vbX - g.CpL) / (g.N > 1 ? g.plotW / (g.N - 1) : 1));
+        idx = Math.max(0, Math.min(g.N - 1, idx));
+        if (this.state.hoverIdx !== idx) this.setState({ hoverIdx: idx });
+      },
+      onChartLeave: () => { if (this.state.hoverIdx != null) this.setState({ hoverIdx: null }); },
+      columns,
+      summary,
+      plan,
+      season,
+      startDate: this.state.start,
+      weekRange,
+      status: this.state.status,
+      showZone: this.props.showZone ?? true,
+      weekLabel: phase + ' · Week ' + (week + 1),
+      weekFocus: tmpl.focus,
+      weekPos: 'Week ' + (week + 1) + ' of ' + nWeeks,
+      pBase: phase === 'Base', pBuild: phase === 'Build', pPeak: phase === 'Peak', pTaper: phase === 'Taper',
+      editingOpen: this.state.editingId != null,
+      edDisc: d.disc || 'Swim', edFocus: d.focus || '', edDur: d.dur || '', edZone: d.zone || '', edDesc: d.desc || '',
+      setPhase: (e) => this.select(e.target.value, 0),
+      selectPhase: (e) => this.select(e.currentTarget.dataset.phase, 0),
+      setStart: (e) => { const v = e.target.value; if (!v) return; this._save(this.STORE + '_start', v); this.setState({ start: v }); },
+      cmWeekly: this.state.chartMode !== 'cumulative',
+      cmCumulative: this.state.chartMode === 'cumulative',
+      setChartMode: (e) => { const m = e.currentTarget.dataset.mode; this._save('im703_v1_chartmode', m); this.setState({ chartMode: m }); },
+      toggleSeries: (e) => { const n = e.currentTarget.dataset.series; this.setState((st) => { const h = { ...st.chartHidden, [n]: !st.chartHidden[n] }; this._save('im703_v1_charthidden', h); return { chartHidden: h }; }); },
+      prevWeek: () => { if (week > 0) this.select(phase, week - 1); },
+      nextWeek: () => { if (week < nWeeks - 1) this.select(phase, week + 1); },
+      refresh: () => { this.setState({ status: 'Syncing…' }); setTimeout(() => this.sync(), 550); },
+      resetOrder: () => { try { localStorage.removeItem(this._weekKey(phase, week)); } catch (e) {} const sessions2 = this._fresh(phase, week); this.setState({ sessions: sessions2, dragId: null, dragOverDay: null }); },
+      toggleDone: (e) => {
+        const id = e.currentTarget.dataset.id;
+        this.setState((st) => { const done2 = { ...st.done, [id]: !st.done[id] }; this._save(this._doneKey(), done2); return { done: done2 }; });
+      },
+      dragStart: (e) => { this.setState({ dragId: e.currentTarget.dataset.id }); e.dataTransfer.effectAllowed = 'move'; },
+      dragEnd: () => this.setState({ dragId: null, dragOverDay: null }),
+      dragOverCol: (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const day = e.currentTarget.dataset.day;
+        if (this.state.dragOverDay !== day) this.setState({ dragOverDay: day });
+      },
+      dropCol: (e) => {
+        e.preventDefault();
+        const day = e.currentTarget.dataset.day;
+        const id = this.state.dragId;
+        if (!id) return;
+        const sessions2 = this.state.sessions.map((s) => (s.id === id ? { ...s, day } : s));
+        this._persistSessions(sessions2);
+        this.setState({ dragId: null, dragOverDay: null });
+      },
+      addSession: (e) => {
+        const day = e.currentTarget.dataset.day;
+        const id = 'cus-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const sessions2 = [...this.state.sessions, { d: day, day, disc: 'Swim', focus: '', dur: '0:30', zone: 'Z2', desc: '', id, custom: true }];
+        this._save(this._weekKey(this.state.phase, this.state.week), sessions2);
+        this.setState({ sessions: sessions2, editingId: id, draft: { disc: 'Swim', focus: '', dur: '0:30', zone: 'Z2', desc: '' } });
+      },
+      removeSession: (e) => {
+        const id = e.currentTarget.dataset.id;
+        const sessions2 = this.state.sessions.filter((s) => s.id !== id);
+        this._persistSessions(sessions2);
+      },
+      openEdit: (e) => {
+        const id = e.currentTarget.dataset.id;
+        const s = this.state.sessions.find((x) => x.id === id);
+        if (!s) return;
+        this.setState({ editingId: id, draft: { disc: s.disc, focus: s.focus || '', dur: s.dur || '', zone: s.zone || '', desc: s.desc || '' } });
+      },
+      setEdDisc: (e) => this.setState((st) => ({ draft: { ...st.draft, disc: e.target.value } })),
+      setEdFocus: (e) => this.setState((st) => ({ draft: { ...st.draft, focus: e.target.value } })),
+      setEdDur: (e) => this.setState((st) => ({ draft: { ...st.draft, dur: e.target.value } })),
+      setEdZone: (e) => this.setState((st) => ({ draft: { ...st.draft, zone: e.target.value } })),
+      setEdDesc: (e) => this.setState((st) => ({ draft: { ...st.draft, desc: e.target.value } })),
+      saveEdit: () => {
+        const id = this.state.editingId, dr = this.state.draft || {};
+        const dur = (dr.dur && dr.dur.trim()) ? dr.dur.trim() : '—';
+        const zone = (dr.zone && dr.zone.trim()) ? dr.zone.trim() : '—';
+        const sessions2 = this.state.sessions.map((s) => (s.id === id ? { ...s, disc: dr.disc, focus: dr.focus, dur, zone, desc: dr.desc } : s));
+        this._save(this._weekKey(this.state.phase, this.state.week), sessions2);
+        this.setState({ sessions: sessions2, editingId: null, draft: null });
+      },
+      cancelEdit: () => this.setState({ editingId: null, draft: null }),
+      stopClose: (e) => e.stopPropagation(),
+      deleteEditing: () => {
+        const id = this.state.editingId;
+        const sessions2 = this.state.sessions.filter((s) => s.id !== id);
+        this._save(this._weekKey(this.state.phase, this.state.week), sessions2);
+        this.setState({ sessions: sessions2, editingId: null, draft: null });
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

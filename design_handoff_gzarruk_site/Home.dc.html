@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-a48fb10f-b2bb-4614-b941-9580377fd03d/styles.css">
+<script src="_ds/nocturne-a48fb10f-b2bb-4614-b941-9580377fd03d/_ds_bundle.js"></script>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+  body { margin: 0; min-height: 100vh; background:
+    radial-gradient(1200px 720px at 90% -180px, color-mix(in srgb, var(--color-accent-900) 72%, transparent), transparent 60%),
+    radial-gradient(1000px 820px at -12% 108%, color-mix(in srgb, black 30%, transparent), transparent 55%),
+    var(--color-bg); }
+  a { color: var(--color-accent); }
+  a:hover { color: var(--color-accent-300); }
+  @media (max-width: 920px) {
+    .layout { grid-template-columns: 1fr !important; }
+    .sidebar { position: static !important; height: auto !important; min-height: 0 !important;
+      border-right: none !important; border-bottom: 1px solid var(--color-divider) !important; }
+  }
+</style>
+</helmet>
+
+<div class="layout" style="display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); min-height: 100vh;">
+
+  <aside class="sidebar" style="position: sticky; top: 0; align-self: start; min-height: 100vh; padding: 48px 36px; background: color-mix(in srgb, var(--color-surface) 60%, transparent); border-right: 1px solid var(--color-divider); display: flex; flex-direction: column; gap: 22px;">
+    <sc-if value="{{ openToWork }}">
+      <span style="display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; font-size: 12px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--color-accent); color: var(--color-accent-300);">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 30%, transparent);"></span>Available for consulting
+      </span>
+    </sc-if>
+
+    <div style="flex: 0 0 108px; width: 108px; height: 108px; min-height: 108px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px var(--color-accent), 0 16px 42px -14px color-mix(in srgb, var(--color-accent) 52%, transparent);">
+      <img src="assets/profile.jpeg" alt="Gustavo A. Zarruk" style="width: 100%; height: 100%; object-fit: cover; object-position: 56% 30%;" />
+    </div>
+
+    <div>
+      <h1 style="font-size: 27px; letter-spacing: -0.015em; margin: 0 0 9px; color: var(--color-text);">Gustavo A. Zarruk</h1>
+      <span style="display: inline-flex; align-items: center; gap: 10px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-accent);"><span style="width: 28px; height: 1px; background: var(--color-accent);"></span>Industrial Data Scientist</span>
+    </div>
+
+    <p style="font-size: 14px; line-height: 1.62; margin: 0; text-wrap: pretty; color: color-mix(in srgb, var(--color-text) 72%, transparent);">PhD engineer &amp; data science leader. 20+ years across academic research, applied R&amp;D, and industry — particularly energy.</p>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+      <span class="tag tag-accent" style="white-space: nowrap;">PhD engineer</span>
+      <span class="tag tag-neutral" style="white-space: nowrap;">20+ years</span>
+      <span class="tag tag-neutral" style="white-space: nowrap;">Energy focus</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 2px;">
+      <a href="https://www.linkedin.com/in/gzarruk/" target="_blank" rel="noopener" style="display: flex; align-items: center; gap: 12px; padding: 11px 13px; border: 1px solid var(--color-divider); border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font-size: 14px;" style-hover="border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, transparent);"><i class="ph ph-linkedin-logo" style="font-size: 18px; color: var(--color-accent);"></i> <span style="flex: 1;">LinkedIn</span><i class="ph ph-arrow-up-right" style="font-size: 14px; color: color-mix(in srgb, var(--color-text) 45%, transparent);"></i></a>
+      <a href="https://github.com/gzarruk" target="_blank" rel="noopener" style="display: flex; align-items: center; gap: 12px; padding: 11px 13px; border: 1px solid var(--color-divider); border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font-size: 14px;" style-hover="border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, transparent);"><i class="ph ph-github-logo" style="font-size: 18px; color: var(--color-accent);"></i> <span style="flex: 1;">GitHub</span><i class="ph ph-arrow-up-right" style="font-size: 14px; color: color-mix(in srgb, var(--color-text) 45%, transparent);"></i></a>
+      <a href="mailto:gzarruk@gmail.com" style="display: flex; align-items: center; gap: 12px; padding: 11px 13px; border: 1px solid var(--color-divider); border-radius: var(--radius-md); color: var(--color-text); text-decoration: none; font-size: 14px;" style-hover="border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 10%, transparent);"><i class="ph ph-envelope-simple" style="font-size: 18px; color: var(--color-accent);"></i> <span style="flex: 1;">Email</span><i class="ph ph-arrow-up-right" style="font-size: 14px; color: color-mix(in srgb, var(--color-text) 45%, transparent);"></i></a>
+    </div>
+
+    <div style="margin-top: auto; padding-top: 24px; font-size: 11px; color: color-mix(in srgb, var(--color-text) 45%, transparent);">© 2026 Gustavo A. Zarruk</div>
+  </aside>
+
+  <main style="padding: 64px clamp(28px, 5vw, 72px); max-width: 860px;">
+    <section style="margin-bottom: 44px;">
+      <span style="display: inline-flex; align-items: center; gap: 14px; font-size: 12px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 16px;"><span style="width: 40px; height: 1px; background: var(--color-accent);"></span>About</span>
+      <p style="font-size: 18px; line-height: 1.68; margin: 0 0 14px; text-wrap: pretty; color: var(--color-text);">I combine rigorous physics-based and data-driven modeling with hands-on delivery of scalable analytics for asset-heavy industries. Across two decades I've moved between the lab, the prototype, and the plant — leading multidisciplinary teams and advising on data architecture and analytics strategy.</p>
+      <p style="font-size: 16px; line-height: 1.72; margin: 0; text-wrap: pretty; color: color-mix(in srgb, var(--color-text) 74%, transparent);">My focus is translating complex methods into decisions people can act on, most often in energy.</p>
+    </section>
+
+    <div style="height: 1px; background: linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent); margin-bottom: 40px;"></div>
+
+    <section style="margin-bottom: 44px;">
+      <span style="display: inline-flex; align-items: center; gap: 14px; font-size: 12px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 22px;"><span style="width: 40px; height: 1px; background: var(--color-accent);"></span>Experience</span>
+
+      <sc-if value="{{ expCards }}" hint-placeholder-val="{{ true }}">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+          <div class="card elev-sm" style="padding: 20px; gap: 11px; transition: box-shadow 0.16s ease, transform 0.16s ease;" style-hover="transform: translateY(-2px); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent), var(--shadow-md);">
+            <div class="card-kicker">Foundation</div>
+            <div style="display: flex; align-items: center; gap: 11px;"><span style="flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);"><i class="ph ph-graduation-cap" style="font-size: 18px;"></i></span><div class="card-title">Academic research</div></div>
+            <p class="card-body">Physics-based modeling and PhD-level rigor at the base of every solution.</p>
+          </div>
+          <div class="card elev-sm" style="padding: 20px; gap: 11px; transition: box-shadow 0.16s ease, transform 0.16s ease;" style-hover="transform: translateY(-2px); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent), var(--shadow-md);">
+            <div class="card-kicker">Build</div>
+            <div style="display: flex; align-items: center; gap: 11px;"><span style="flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);"><i class="ph ph-flask" style="font-size: 18px;"></i></span><div class="card-title">Applied R&amp;D</div></div>
+            <p class="card-body">Research methods into working prototypes, tools, and scalable analytics.</p>
+          </div>
+          <div class="card elev-sm" style="padding: 20px; gap: 11px; grid-column: span 2; transition: box-shadow 0.16s ease, transform 0.16s ease;" style-hover="transform: translateY(-2px); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 45%, transparent), var(--shadow-md);">
+            <div class="card-kicker">Deliver</div>
+            <div style="display: flex; align-items: center; gap: 11px;"><span style="flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent);"><i class="ph ph-briefcase" style="font-size: 18px;"></i></span><div class="card-title">Industrial consultancy</div></div>
+            <p class="card-body">Data architecture, analytics strategy, and operational value for asset-heavy industries — particularly energy — leading multidisciplinary teams end to end.</p>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ expList }}">
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+          <div style="display: flex; gap: 16px; padding: 16px 0;">
+            <i class="ph ph-graduation-cap" style="font-size: 22px; color: var(--color-accent); margin-top: 2px;"></i>
+            <div><div style="font-size: 15px; font-weight: 600; color: var(--color-text); margin-bottom: 3px;">Academic research</div><div style="font-size: 14px; line-height: 1.6; color: color-mix(in srgb, var(--color-text) 66%, transparent);">Physics-based modeling and PhD-level rigor at the foundation of every solution.</div></div>
+          </div>
+          <div style="height: 1px; background: linear-gradient(to right, transparent, var(--color-neutral-800) 48px, var(--color-neutral-800) calc(100% - 48px), transparent);"></div>
+          <div style="display: flex; gap: 16px; padding: 16px 0;">
+            <i class="ph ph-flask" style="font-size: 22px; color: var(--color-accent); margin-top: 2px;"></i>
+            <div><div style="font-size: 15px; font-weight: 600; color: var(--color-text); margin-bottom: 3px;">Applied R&amp;D</div><div style="font-size: 14px; line-height: 1.6; color: color-mix(in srgb, var(--color-text) 66%, transparent);">Turning research methods into working prototypes, tools, and scalable analytics.</div></div>
+          </div>
+          <div style="height: 1px; background: linear-gradient(to right, transparent, var(--color-neutral-800) 48px, var(--color-neutral-800) calc(100% - 48px), transparent);"></div>
+          <div style="display: flex; gap: 16px; padding: 16px 0;">
+            <i class="ph ph-briefcase" style="font-size: 22px; color: var(--color-accent); margin-top: 2px;"></i>
+            <div><div style="font-size: 15px; font-weight: 600; color: var(--color-text); margin-bottom: 3px;">Industrial consultancy</div><div style="font-size: 14px; line-height: 1.6; color: color-mix(in srgb, var(--color-text) 66%, transparent);">Data architecture, analytics strategy, and operational value for asset-heavy industries.</div></div>
+          </div>
+        </div>
+      </sc-if>
+    </section>
+
+    <sc-if value="{{ showContact }}" hint-placeholder-val="{{ true }}">
+      <div style="height: 1px; background: linear-gradient(to right, transparent, var(--color-divider) 48px, var(--color-divider) calc(100% - 48px), transparent); margin-bottom: 40px;"></div>
+      <section>
+        <span style="display: inline-flex; align-items: center; gap: 14px; font-size: 12px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-accent); margin-bottom: 16px;"><span style="width: 40px; height: 1px; background: var(--color-accent);"></span>Get in touch</span>
+        <h2 style="font-size: 26px; letter-spacing: -0.015em; margin: 0 0 8px; color: var(--color-text);">Let's talk</h2>
+        <p style="font-size: 15px; line-height: 1.6; margin: 0 0 22px; color: color-mix(in srgb, var(--color-text) 66%, transparent);">Have a project or a question? A note lands straight in my inbox.</p>
+        <form onSubmit="{{ submitContact }}" style="display: flex; flex-direction: column; gap: 13px; max-width: 480px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 13px;">
+            <div class="field"><label>Name</label><input class="input" name="contactName" type="text" placeholder="Your name" /></div>
+            <div class="field"><label>Email</label><input class="input" name="contactEmail" type="email" placeholder="you@example.com" /></div>
+          </div>
+          <div class="field"><label>Message</label><textarea class="input" name="contactMessage" placeholder="What's on your mind?"></textarea></div>
+          <button type="submit" class="btn btn-primary" style="align-self: flex-start; margin-top: 2px;">Send message <i class="ph ph-arrow-right"></i></button>
+        </form>
+      </section>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;openToWork&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Content&quot;},
+  &quot;experienceStyle&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;cards&quot;, &quot;list&quot;], &quot;default&quot;: &quot;cards&quot;, &quot;tsType&quot;: &quot;'cards' | 'list'&quot;, &quot;section&quot;: &quot;Layout&quot;},
+  &quot;showContact&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Layout&quot;}
+}">
+class Component extends DCLogic {
+  renderVals() {
+    const expStyle = this.props.experienceStyle ?? 'cards';
+    return {
+      openToWork: this.props.openToWork ?? false,
+      showContact: this.props.showContact ?? true,
+      expCards: expStyle === 'cards',
+      expList: expStyle === 'list',
+      submitContact: (e) => {
+        e.preventDefault();
+        const f = e.currentTarget;
+        const val = (n) => (f.querySelector('[name="' + n + '"]')?.value || '').trim();
+        const name = val('contactName');
+        const email = val('contactEmail');
+        const message = val('contactMessage');
+        const subject = encodeURIComponent('Website message' + (name ? ' from ' + name : ''));
+        const body = encodeURIComponent(message + '\n\n— ' + name + (email ? ' <' + email + '>' : ''));
+        window.location.href = 'mailto:gzarruk@gmail.com?subject=' + subject + '&body=' + body;
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>
