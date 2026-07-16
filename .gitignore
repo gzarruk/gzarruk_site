@@ -14,3 +14,4 @@ node_modules/
 
 # Test/debug artifacts (e.g. from browser automation tooling)
 .playwright-mcp/
+design_handoff_gzarruk_site
