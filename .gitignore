@@ -1,0 +1,13 @@
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
+
+# Local env / secrets
+.env
+.env.local
+
+# Test/debug artifacts (e.g. from browser automation tooling)
+.playwright-mcp/
