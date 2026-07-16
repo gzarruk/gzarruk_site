@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>IM Training — Gustavo A. Zarruk</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg: #0a0a12;
+    --bg-2: #12101f;
+    --text: #f3f0ff;
+    --muted: #a9a3c4;
+    --card: rgba(255, 255, 255, 0.04);
+    --card-border: rgba(255, 255, 255, 0.10);
+    --grad: linear-gradient(120deg, #ff2d78 0%, #ff6a3d 45%, #ffb03d 100%);
+    --grad-soft: linear-gradient(120deg, rgba(255,45,120,0.20), rgba(255,106,61,0.14), rgba(255,176,61,0.10));
+    --accent: #ff2d78;
+    --radius: 20px;
+    --ok: #3ddc97;
+    --err: #ff6a6a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    min-height: 100vh;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: -30% -10% auto -10%;
+    height: 70vh;
+    background:
+      radial-gradient(45% 55% at 20% 20%, rgba(255,45,120,0.30), transparent 70%),
+      radial-gradient(40% 50% at 80% 10%, rgba(255,176,61,0.24), transparent 70%),
+      radial-gradient(50% 60% at 60% 40%, rgba(140,60,255,0.26), transparent 70%);
+    filter: blur(30px);
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: clamp(32px, 6vw, 64px) 20px 60px;
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-bottom: 28px;
+  }
+  .back:hover { color: var(--text); }
+
+  header.page-head { margin-bottom: 28px; }
+
+  h1 {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.7rem, 5vw, 2.4rem);
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+
+  .tagline {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 1rem;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    backdrop-filter: blur(10px);
+    padding: 24px;
+    margin-top: 20px;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  select, button {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    padding: 9px 14px;
+    cursor: pointer;
+  }
+  select:hover, button:hover:not(:disabled) { border-color: rgba(255,255,255,0.28); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  button.primary {
+    background: var(--grad);
+    border: none;
+    color: #fff;
+  }
+
+  .status {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .status.err { color: var(--err); }
+  .status .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--ok);
+    margin-right: 6px;
+  }
+
+  .signin-panel, .setup-panel {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .signin-panel p, .setup-panel p { color: var(--muted); margin-bottom: 18px; }
+  .setup-panel { text-align: left; }
+  .setup-panel h3 { font-family: 'Sora', sans-serif; margin-bottom: 10px; }
+  .setup-panel ol { color: var(--muted); padding-left: 20px; }
+  .setup-panel li { margin-bottom: 10px; }
+  .setup-panel code {
+    background: rgba(255,255,255,0.08);
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 0.88em;
+  }
+
+  .grid-scroll {
+    overflow-x: auto;
+    border-radius: 14px;
+    border: 1px solid var(--card-border);
+  }
+  table.sheet-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+  table.sheet-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    color: var(--text);
+  }
+  table.sheet-table tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+  table.sheet-table tr:first-child td {
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .muted { color: var(--muted); font-size: 0.9rem; }
+  .hidden { display: none !important; }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <a class="back" href="/">← gzarruk.com</a>
+
+    <header class="page-head">
+      <h1>Ironman 70.3 Training</h1>
+      <div class="tagline">Live from Google Sheets</div>
+    </header>
+
+    <section class="card">
+      <div class="toolbar">
+        <select id="tab-select" class="hidden"></select>
+        <button id="refresh-btn" class="hidden">Refresh</button>
+        <button id="signout-btn" class="hidden">Sign out</button>
+        <span id="status" class="status"></span>
+      </div>
+
+      <div id="signin-panel" class="signin-panel">
+        <p>This sheet is private, so sign in with the Google account that has access to it.</p>
+        <button id="signin-btn" class="primary" disabled>Sign in with Google</button>
+      </div>
+
+      <div id="setup-panel" class="setup-panel hidden">
+        <h3>One-time setup needed</h3>
+        <p>This page talks directly to the Google Sheets API from your browser — no server involved. Before it can sign you in, you need to create a Google OAuth client and paste its ID into this file.</p>
+        <ol>
+          <li>In <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:#fff;">Google Cloud Console</a>, create a project (or reuse one).</li>
+          <li>Enable the <strong>Google Sheets API</strong> for that project (APIs &amp; Services → Library).</li>
+          <li>Go to APIs &amp; Services → OAuth consent screen. Choose <strong>External</strong>, keep it in <strong>Testing</strong> status, and add <code>gzarruk@gmail.com</code> as a test user.</li>
+          <li>Go to APIs &amp; Services → Credentials → Create Credentials → <strong>OAuth client ID</strong> → type <strong>Web application</strong>. Under Authorized JavaScript origins add <code>https://www.gzarruk.com</code> (and <code>http://localhost:PORT</code> if you want to test locally).</li>
+          <li>Copy the generated Client ID and paste it as <code>CONFIG.clientId</code> near the top of the <code>&lt;script&gt;</code> in <code>im/index.html</code>.</li>
+        </ol>
+      </div>
+
+      <div id="grid-container"></div>
+    </section>
+
+    <footer>Not linked from the main site — edits happen in the sheet, this page just mirrors it.</footer>
+  </main>
+
+  <script>
+    const CONFIG = {
+      // Paste the OAuth Client ID you create in Google Cloud Console (see setup instructions above).
+      clientId: 'YOUR_OAUTH_CLIENT_ID.apps.googleusercontent.com',
+      spreadsheetId: '1q6CuiPDr9u_XedMZGdEdUMNG7d2yitvBUI46O92Q-Uw',
+      defaultTab: 'Templates',
+      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+    };
+
+    const TOKEN_KEY = 'im_gsheet_token';
+    const TOKEN_EXPIRY_KEY = 'im_gsheet_token_expiry';
+    const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
+    const els = {
+      tabSelect: document.getElementById('tab-select'),
+      refreshBtn: document.getElementById('refresh-btn'),
+      signoutBtn: document.getElementById('signout-btn'),
+      signinBtn: document.getElementById('signin-btn'),
+      signinPanel: document.getElementById('signin-panel'),
+      setupPanel: document.getElementById('setup-panel'),
+      gridContainer: document.getElementById('grid-container'),
+      status: document.getElementById('status'),
+    };
+
+    let tokenClient = null;
+    let accessToken = sessionStorage.getItem(TOKEN_KEY) || null;
+    let tokenExpiry = Number(sessionStorage.getItem(TOKEN_EXPIRY_KEY) || 0);
+    let autoRefreshTimer = null;
+
+    function isConfigured() {
+      return CONFIG.clientId && !CONFIG.clientId.startsWith('YOUR_');
+    }
+
+    function hasValidToken() {
+      return accessToken && Date.now() < tokenExpiry;
+    }
+
+    function setStatus(text, isError) {
+      els.status.textContent = text;
+      els.status.classList.toggle('err', !!isError);
+    }
+
+    function escapeHtml(value) {
+      const div = document.createElement('div');
+      div.textContent = value ?? '';
+      return div.innerHTML;
+    }
+
+    function clearToken() {
+      accessToken = null;
+      tokenExpiry = 0;
+      sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(TOKEN_EXPIRY_KEY);
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+    }
+
+    function showSignedOut(message) {
+      els.signinPanel.classList.remove('hidden');
+      els.tabSelect.classList.add('hidden');
+      els.refreshBtn.classList.add('hidden');
+      els.signoutBtn.classList.add('hidden');
+      els.gridContainer.innerHTML = '';
+      setStatus(message || '', !!message);
+    }
+
+    async function sheetsFetch(path) {
+      const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.spreadsheetId}${path}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.status === 401) {
+        clearToken();
+        showSignedOut('Session expired — sign in again.');
+        throw new Error('unauthorized');
+      }
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Sheets API ${res.status}: ${body}`);
+      }
+      return res.json();
+    }
+
+    async function loadTabs() {
+      const data = await sheetsFetch('?fields=sheets.properties.title');
+      return (data.sheets || []).map((s) => s.properties.title);
+    }
+
+    async function loadValues(tabName) {
+      const data = await sheetsFetch(`/values/${encodeURIComponent(tabName)}`);
+      return data.values || [];
+    }
+
+    function renderGrid(values) {
+      if (!values.length) {
+        els.gridContainer.innerHTML = '<p class="muted">This tab is empty.</p>';
+        return;
+      }
+      const maxCols = Math.max(...values.map((row) => row.length));
+      let html = '<div class="grid-scroll"><table class="sheet-table">';
+      for (const row of values) {
+        html += '<tr>';
+        for (let c = 0; c < maxCols; c++) {
+          html += `<td>${escapeHtml(row[c])}</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</table></div>';
+      els.gridContainer.innerHTML = html;
+    }
+
+    async function refresh() {
+      const tab = els.tabSelect.value || CONFIG.defaultTab;
+      setStatus('Syncing…');
+      try {
+        const values = await loadValues(tab);
+        renderGrid(values);
+        els.status.classList.remove('err');
+        els.status.innerHTML = `<span class="dot"></span>Synced ${new Date().toLocaleTimeString()}`;
+      } catch (err) {
+        if (err.message !== 'unauthorized') {
+          console.error(err);
+          setStatus('Could not load the sheet — check console for details.', true);
+        }
+      }
+    }
+
+    async function onSignedIn() {
+      els.signinPanel.classList.add('hidden');
+      els.tabSelect.classList.remove('hidden');
+      els.refreshBtn.classList.remove('hidden');
+      els.signoutBtn.classList.remove('hidden');
+
+      try {
+        const tabs = await loadTabs();
+        els.tabSelect.innerHTML = tabs.map((t) => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+        if (tabs.includes(CONFIG.defaultTab)) {
+          els.tabSelect.value = CONFIG.defaultTab;
+        }
+      } catch (err) {
+        if (err.message === 'unauthorized') return;
+        console.error(err);
+      }
+
+      await refresh();
+
+      if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+      autoRefreshTimer = setInterval(refresh, AUTO_REFRESH_MS);
+    }
+
+    window.initGis = function initGis() {
+      if (!isConfigured()) {
+        els.setupPanel.classList.remove('hidden');
+        els.signinPanel.classList.add('hidden');
+        return;
+      }
+
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CONFIG.clientId,
+        scope: CONFIG.scope,
+        callback: (resp) => {
+          if (resp.error) {
+            setStatus(`Sign-in failed: ${resp.error}`, true);
+            return;
+          }
+          accessToken = resp.access_token;
+          tokenExpiry = Date.now() + (resp.expires_in || 3600) * 1000;
+          sessionStorage.setItem(TOKEN_KEY, accessToken);
+          sessionStorage.setItem(TOKEN_EXPIRY_KEY, String(tokenExpiry));
+          onSignedIn();
+        },
+      });
+
+      els.signinBtn.disabled = false;
+      els.signinBtn.addEventListener('click', () => {
+        tokenClient.requestAccessToken({ prompt: hasValidToken() ? '' : 'consent' });
+      });
+
+      if (hasValidToken()) {
+        onSignedIn();
+      }
+    };
+
+    els.refreshBtn.addEventListener('click', refresh);
+    els.tabSelect.addEventListener('change', refresh);
+    els.signoutBtn.addEventListener('click', () => {
+      clearToken();
+      showSignedOut('Signed out.');
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && hasValidToken()) refresh();
+    });
+  </script>
+
+  <script src="https://accounts.google.com/gsi/client" async defer onload="initGis()"></script>
+</body>
+</html>
