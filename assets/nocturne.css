@@ -1,6 +1,6 @@
 /*
   Nocturne design system — shared foundation for gzarruk.com and its subpages.
-  Quiet, compact, dark blue-grey UI; Inter type; a single blurple accent used
+  Quiet, compact, dark blue-grey UI; Inter type; a single deep-green accent used
   as line/glow, never a flood. Tokens and component classes recreated from the
   design handoff (design_handoff_gzarruk_site/README.md).
 
@@ -12,15 +12,15 @@
   --color-bg: #161826;
   --color-surface: #232532;
   --color-text: #e9e9ed;
-  --color-accent: #9184d9;
+  --color-accent: #2fa36f;
   --color-divider: color-mix(in srgb, #e9e9ed 16%, transparent);
 
   /* Accent ramp */
-  --color-accent-100: #f5f4ff;
-  --color-accent-300: #d2cefd;
-  --color-accent-500: #968ae0;
-  --color-accent-700: #5d5294;
-  --color-accent-900: #2b2741;
+  --color-accent-100: #eefbf4;
+  --color-accent-300: #9fe7c3;
+  --color-accent-500: #34a874;
+  --color-accent-700: #1e6b4a;
+  --color-accent-900: #1a3a2b;
 
   /* Neutral ramp */
   --color-neutral-100: #f3f5fe;
