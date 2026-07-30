@@ -122,6 +122,24 @@
   /* ---- Sidebar "Projects" group ---- */
   .projects .kicker { margin-bottom: 12px; }
 
+  /* Inline badge — a .tag shrunk to sit inside a 14px link-row label. */
+  .link-row .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9.5px;
+    line-height: 1;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 3px 6px;
+    border-radius: 5px;
+    white-space: nowrap;
+    vertical-align: 1px;
+    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+    color: var(--color-accent-100);
+  }
+  .link-row .badge i { font-size: 10px; }
+
   .sidebar-foot {
     margin-top: auto;
     padding-top: 24px;
@@ -275,7 +293,7 @@
         <nav class="links" aria-label="Projects">
           <a class="link-row" href="https://www.tseriz.com/" target="_blank" rel="noopener">
             <i class="ph ph-wave-sine" aria-hidden="true"></i>
-            <span class="label">Synthetic Time Series Generator</span>
+            <span class="label">Synthetic Time Series Generator <span class="badge"><i class="ph ph-sparkle" aria-hidden="true"></i>AI</span></span>
             <i class="ph ph-arrow-up-right out" aria-hidden="true"></i>
           </a>
           <a class="link-row" href="https://yootri.gzarruk.com" target="_blank" rel="noopener">
